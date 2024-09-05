@@ -6,3 +6,9 @@ log_dir = /home/slloyd/git/pydmr/logs
 [testing]
 src_dir = /home/slloyd/Documents/Testing
 dst_dir = /home/slloyd/Documents/html
+
+[s3]
+ns3 = test1
+os3 = test2
+tp = test3
+rp = test4
