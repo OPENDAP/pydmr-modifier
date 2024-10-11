@@ -3,3 +3,4 @@ old/
 .idea/
 __pycache__
 *~
+/setEnvs.sh
