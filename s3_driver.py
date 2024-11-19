@@ -1,5 +1,8 @@
 
 import configparser
+import regex as re
+import os
+
 import boto3
 import cmr
 
@@ -32,26 +35,29 @@ def load_config():
     print("\treplace: " + replace)
 
 
-def query_cmr(ccid):
+def query_cmr(ccid, max =-1):
     print("Starting query_cmr with url: " + ccid) if verbose else ''
 
     granules = cmr.get_collection_granules(ccid)
-    print("# granules: " + str(len(granules)))
+    num_gran = len(granules)
+    print("# granules: " + str(num_gran))
+    print("max: " + str(max)) if max != -1 else ''
     # x = 0
+    cur_num = 0
     url_list = []
     for granule in granules:
-        # print("granule: " + granule + " - " + granules[granule])
+        print("\ngranule: " + granule + " - " + granules[granule]) if verbose else ''
         urls = cmr.get_related_urls(ccid, granules[granule])
-        # print("# urls: " + str(len(urls)))
+        print("# urls: " + str(len(urls))) if verbose else ''
         for url in urls:
-            # print("\turl: " + url + " - " + urls[url])
+            print("\turl: " + url + " - " + urls[url]) if verbose else ''
             if url == "URL2":
                 url_list.append(urls[url])
-                print(".", end="", flush=True)
-        # print("\n")
-        # x += 1
-        # if x == 5:
-        #    break
+
+        cur_num += 1
+        print_progress(cur_num, num_gran)
+        if len(url_list) == max:
+            break
     print("\n")
     return url_list
 
@@ -98,18 +104,27 @@ def download_file_from_s3(s3_bucket_name, s3_file_name, local_file_path):
     s3.download_file(s3_bucket_name, s3_file_name, local_file_path)
 
 
-def transform(path):
+def replace_template(path, url):
     print("Starting Transform: " + path) if verbose else ''
     # pseudocode
     # read file into memory from Imports
     # search the file for the template string
     # replace any instant of templates with the replacement string
     # write file to Exports
+    contents = ""
+    with open(path, 'r') as f:
+        contents = f.read()
+        f.close()
+
+    contents = re.sub(replace, url, contents)
+
+    with open(path, 'w') as f:
+        f.write(contents)
+        f.close()
 
 
 def copy_file_to_s3(local_file_path, s3_bucket_name, s3_file_name):
     """Copies a local file to an S3 bucket.
-
     Args:
         local_file_path (str): The path to the local file.
         s3_bucket_name (str): The name of the S3 bucket.
@@ -120,13 +135,42 @@ def copy_file_to_s3(local_file_path, s3_bucket_name, s3_file_name):
     s3.upload_file(local_file_path, s3_bucket_name, s3_file_name)
 
 
+def delete_file(path):
+    """ Deletes a file.
+    Args:
+        path: path of the file to delete.
+
+    Returns: NA
+    """
+
+    if os.path.exists(path):
+        os.remove(path)
+    else:
+        print("The file does not exist: " + path)
+
+
+def print_progress(amount, total):
+    """
+    outputs the progress bar to the terminal
+    :param amount:
+    :param total:
+    :return:
+    """
+    percent = amount * 100 / total
+    msg = "\t" + str(round(percent, 2)) + "% [ " + str(amount) + " / " + str(total) + " ] "
+    print(msg, end="\r", flush=True)
+
+
 def main():
     import argparse
     parser = argparse.ArgumentParser(description="Query CMR and get information about Providers with Collections "
                                                  "accessible using OPeNDAP.")
 
-    parser.add_argument("-v", "--verbose", help="increase output verbosity", action="store_true", default=False)
+    parser.add_argument("-v", "--verbose", help="increase output verbosity", action="store_true",
+                        default=False)
     parser.add_argument("-c", "--ccid", help="ccid to send to CMR")
+    parser.add_argument("-t", "--test", help="test mode, caps max number of granule urls to 100",
+                        action="store_true", default=False)
 
     args = parser.parse_args()
 
@@ -134,24 +178,29 @@ def main():
     # pseudocode
     # call load_config(...) to set ns3 and os3
     load_config()
-    url_list = query_cmr(args.ccid)
-    print("# urls: " + str(len(url_list)))
-    # call query_s3(...) w/ ns3 and save list of urls into list/vector of strings
+    if args.test:
+        url_list = query_cmr(args.ccid, 10)
+    else:
+        url_list = query_cmr(args.ccid)
+    print("# urls: " + str(len(url_list))) if verbose else ''
+
+    for url in url_list:
+        print("\turl: " + url) if verbose else ''
+        request_url = url + ".dmrpp"
+        local_path = "Imports/"+request_url
+        download_file_from_s3(nasa_s3, request_url, local_path)
+        replace_template(local_path, url)
+        copy_file_to_s3(local_path, open_s3, args.ccid+"/"+request_url)
+        delete_file(local_path)
+
     """
-    files = query_s3(nasa_s3)
     # foreach loop
     for file in files:
-        print("\t" + file)
-        # grab url from list
-        sfile = file.replace('/', '.')
-        # download file from nasa s3 and write to Imports
-        download_file_from_s3(nasa_s3, file, "Imports/"+sfile)
-        # pass file to transform(...)
-            # regex find template string in file
-            # replace with new string in file
-            # write file to Exports
-            # pass file to writs_s3(...)
-                # copies file from Exports to opendap s3
+        grab url from list              | (done)
+        download file viva boto3        | (done) (unable to test)
+        regex swap the template         | (done) (unable to test)
+        upload to s3 bucket viva boto3  | (done) (tested using opendap_s3 files, untested with nasa files)
+        delete file                     | (done) (untested)
     """
 
 

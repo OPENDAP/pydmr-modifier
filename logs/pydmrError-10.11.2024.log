@@ -1,0 +1,80 @@
+/////////////////////////////////////////////////////
+JSONDecodeError : cmr.py::process_request() - https://cmr.earthdata.nasa.gov/search/granules.umm_json_v1_4?collection_concept_id=C2036877806-POCLOUD&granule_ur=20190510010000-OSISAF-L3C_GHRSST-SSTsubskin-GOES16-ssteqc_goes16_20190510_010000-v02.0-fv01.0
+/////////////////////////////////////////////////////
+JSONDecodeError : cmr.py::process_request() - https://cmr.earthdata.nasa.gov/search/granules.umm_json_v1_4?collection_concept_id=C2036877806-POCLOUD&granule_ur=20190510050000-OSISAF-L3C_GHRSST-SSTsubskin-GOES16-ssteqc_goes16_20190510_050000-v02.0-fv01.0
+/////////////////////////////////////////////////////
+JSONDecodeError : cmr.py::process_request() - https://cmr.earthdata.nasa.gov/search/granules.umm_json_v1_4?collection_concept_id=C2036877806-POCLOUD&granule_ur=20190510100000-OSISAF-L3C_GHRSST-SSTsubskin-GOES16-ssteqc_goes16_20190510_100000-v02.0-fv01.0
+/////////////////////////////////////////////////////
+JSONDecodeError : cmr.py::process_request() - https://cmr.earthdata.nasa.gov/search/granules.umm_json_v1_4?collection_concept_id=C2036877806-POCLOUD&granule_ur=20190510140000-OSISAF-L3C_GHRSST-SSTsubskin-GOES16-ssteqc_goes16_20190510_140000-v02.0-fv01.0
+/////////////////////////////////////////////////////
+JSONDecodeError : cmr.py::process_request() - https://cmr.earthdata.nasa.gov/search/granules.umm_json_v1_4?collection_concept_id=C2036877806-POCLOUD&granule_ur=20190510160000-OSISAF-L3C_GHRSST-SSTsubskin-GOES16-ssteqc_goes16_20190510_160000-v02.0-fv01.0
+/////////////////////////////////////////////////////
+JSONDecodeError : cmr.py::process_request() - https://cmr.earthdata.nasa.gov/search/granules.umm_json_v1_4?collection_concept_id=C2036877806-POCLOUD&granule_ur=20190511010000-OSISAF-L3C_GHRSST-SSTsubskin-GOES16-ssteqc_goes16_20190511_010000-v02.0-fv01.0
+/////////////////////////////////////////////////////
+JSONDecodeError : cmr.py::process_request() - https://cmr.earthdata.nasa.gov/search/granules.umm_json_v1_4?collection_concept_id=C2036877806-POCLOUD&granule_ur=20190511030000-OSISAF-L3C_GHRSST-SSTsubskin-GOES16-ssteqc_goes16_20190511_030000-v02.0-fv01.0
+/////////////////////////////////////////////////////
+JSONDecodeError : cmr.py::process_request() - https://cmr.earthdata.nasa.gov/search/granules.umm_json_v1_4?collection_concept_id=C2036877806-POCLOUD&granule_ur=20190511080000-OSISAF-L3C_GHRSST-SSTsubskin-GOES16-ssteqc_goes16_20190511_080000-v02.0-fv01.0
+/////////////////////////////////////////////////////
+JSONDecodeError : cmr.py::process_request() - https://cmr.earthdata.nasa.gov/search/granules.umm_json_v1_4?collection_concept_id=C2036877806-POCLOUD&granule_ur=20190511090000-OSISAF-L3C_GHRSST-SSTsubskin-GOES16-ssteqc_goes16_20190511_090000-v02.0-fv01.0
+/////////////////////////////////////////////////////
+JSONDecodeError : cmr.py::process_request() - https://cmr.earthdata.nasa.gov/search/granules.umm_json_v1_4?collection_concept_id=C2036877806-POCLOUD&granule_ur=20190511110000-OSISAF-L3C_GHRSST-SSTsubskin-GOES16-ssteqc_goes16_20190511_110000-v02.0-fv01.0
+/////////////////////////////////////////////////////
+JSONDecodeError : cmr.py::process_request() - https://cmr.earthdata.nasa.gov/search/granules.umm_json_v1_4?collection_concept_id=C2036877806-POCLOUD&granule_ur=20190511150000-OSISAF-L3C_GHRSST-SSTsubskin-GOES16-ssteqc_goes16_20190511_150000-v02.0-fv01.0
+/////////////////////////////////////////////////////
+JSONDecodeError : cmr.py::process_request() - https://cmr.earthdata.nasa.gov/search/granules.umm_json_v1_4?collection_concept_id=C2036877806-POCLOUD&granule_ur=20190511160000-OSISAF-L3C_GHRSST-SSTsubskin-GOES16-ssteqc_goes16_20190511_160000-v02.0-fv01.0
+/////////////////////////////////////////////////////
+JSONDecodeError : cmr.py::process_request() - https://cmr.earthdata.nasa.gov/search/granules.umm_json_v1_4?collection_concept_id=C2036877806-POCLOUD&granule_ur=20190511210000-OSISAF-L3C_GHRSST-SSTsubskin-GOES16-ssteqc_goes16_20190511_210000-v02.0-fv01.0
+/////////////////////////////////////////////////////
+JSONDecodeError : cmr.py::process_request() - https://cmr.earthdata.nasa.gov/search/granules.umm_json_v1_4?collection_concept_id=C2036877806-POCLOUD&granule_ur=20190512000000-OSISAF-L3C_GHRSST-SSTsubskin-GOES16-ssteqc_goes16_20190512_000000-v02.0-fv01.0
+/////////////////////////////////////////////////////
+JSONDecodeError : cmr.py::process_request() - https://cmr.earthdata.nasa.gov/search/granules.umm_json_v1_4?collection_concept_id=C2036877806-POCLOUD&granule_ur=20190512160000-OSISAF-L3C_GHRSST-SSTsubskin-GOES16-ssteqc_goes16_20190512_160000-v02.0-fv01.0
+/////////////////////////////////////////////////////
+JSONDecodeError : cmr.py::process_request() - https://cmr.earthdata.nasa.gov/search/granules.umm_json_v1_4?collection_concept_id=C2036877806-POCLOUD&granule_ur=20190513020000-OSISAF-L3C_GHRSST-SSTsubskin-GOES16-ssteqc_goes16_20190513_020000-v02.0-fv01.0
+/////////////////////////////////////////////////////
+JSONDecodeError : cmr.py::process_request() - https://cmr.earthdata.nasa.gov/search/granules.umm_json_v1_4?collection_concept_id=C2036877806-POCLOUD&granule_ur=20190513210000-OSISAF-L3C_GHRSST-SSTsubskin-GOES16-ssteqc_goes16_20190513_210000-v02.0-fv01.0
+/////////////////////////////////////////////////////
+JSONDecodeError : cmr.py::process_request() - https://cmr.earthdata.nasa.gov/search/granules.umm_json_v1_4?collection_concept_id=C2036877806-POCLOUD&granule_ur=20190513230000-OSISAF-L3C_GHRSST-SSTsubskin-GOES16-ssteqc_goes16_20190513_230000-v02.0-fv01.0
+/////////////////////////////////////////////////////
+JSONDecodeError : cmr.py::process_request() - https://cmr.earthdata.nasa.gov/search/granules.umm_json_v1_4?collection_concept_id=C2036877806-POCLOUD&granule_ur=20190514060000-OSISAF-L3C_GHRSST-SSTsubskin-GOES16-ssteqc_goes16_20190514_060000-v02.0-fv01.0
+/////////////////////////////////////////////////////
+JSONDecodeError : cmr.py::process_request() - https://cmr.earthdata.nasa.gov/search/granules.umm_json_v1_4?collection_concept_id=C2036877806-POCLOUD&granule_ur=20190514080000-OSISAF-L3C_GHRSST-SSTsubskin-GOES16-ssteqc_goes16_20190514_080000-v02.0-fv01.0
+/////////////////////////////////////////////////////
+JSONDecodeError : cmr.py::process_request() - https://cmr.earthdata.nasa.gov/search/granules.umm_json_v1_4?collection_concept_id=C2036877806-POCLOUD&granule_ur=20190514160000-OSISAF-L3C_GHRSST-SSTsubskin-GOES16-ssteqc_goes16_20190514_160000-v02.0-fv01.0
+/////////////////////////////////////////////////////
+JSONDecodeError : cmr.py::process_request() - https://cmr.earthdata.nasa.gov/search/granules.umm_json_v1_4?collection_concept_id=C2036877806-POCLOUD&granule_ur=20190514230000-OSISAF-L3C_GHRSST-SSTsubskin-GOES16-ssteqc_goes16_20190514_230000-v02.0-fv01.0
+/////////////////////////////////////////////////////
+JSONDecodeError : cmr.py::process_request() - https://cmr.earthdata.nasa.gov/search/granules.umm_json_v1_4?collection_concept_id=C2036877806-POCLOUD&granule_ur=20190515020000-OSISAF-L3C_GHRSST-SSTsubskin-GOES16-ssteqc_goes16_20190515_020000-v02.0-fv01.0
+/////////////////////////////////////////////////////
+JSONDecodeError : cmr.py::process_request() - https://cmr.earthdata.nasa.gov/search/granules.umm_json_v1_4?collection_concept_id=C2036877806-POCLOUD&granule_ur=20190515050000-OSISAF-L3C_GHRSST-SSTsubskin-GOES16-ssteqc_goes16_20190515_050000-v02.0-fv01.0
+/////////////////////////////////////////////////////
+JSONDecodeError : cmr.py::process_request() - https://cmr.earthdata.nasa.gov/search/granules.umm_json_v1_4?collection_concept_id=C2036877806-POCLOUD&granule_ur=20190515060000-OSISAF-L3C_GHRSST-SSTsubskin-GOES16-ssteqc_goes16_20190515_060000-v02.0-fv01.0
+/////////////////////////////////////////////////////
+JSONDecodeError : cmr.py::process_request() - https://cmr.earthdata.nasa.gov/search/granules.umm_json_v1_4?collection_concept_id=C2036877806-POCLOUD&granule_ur=20190515070000-OSISAF-L3C_GHRSST-SSTsubskin-GOES16-ssteqc_goes16_20190515_070000-v02.0-fv01.0
+/////////////////////////////////////////////////////
+JSONDecodeError : cmr.py::process_request() - https://cmr.earthdata.nasa.gov/search/granules.umm_json_v1_4?collection_concept_id=C2036877806-POCLOUD&granule_ur=20190515090000-OSISAF-L3C_GHRSST-SSTsubskin-GOES16-ssteqc_goes16_20190515_090000-v02.0-fv01.0
+/////////////////////////////////////////////////////
+JSONDecodeError : cmr.py::process_request() - https://cmr.earthdata.nasa.gov/search/granules.umm_json_v1_4?collection_concept_id=C2036877806-POCLOUD&granule_ur=20190515140000-OSISAF-L3C_GHRSST-SSTsubskin-GOES16-ssteqc_goes16_20190515_140000-v02.0-fv01.0
+/////////////////////////////////////////////////////
+JSONDecodeError : cmr.py::process_request() - https://cmr.earthdata.nasa.gov/search/granules.umm_json_v1_4?collection_concept_id=C2036877806-POCLOUD&granule_ur=20190515150000-OSISAF-L3C_GHRSST-SSTsubskin-GOES16-ssteqc_goes16_20190515_150000-v02.0-fv01.0
+/////////////////////////////////////////////////////
+JSONDecodeError : cmr.py::process_request() - https://cmr.earthdata.nasa.gov/search/granules.umm_json_v1_4?collection_concept_id=C2036877806-POCLOUD&granule_ur=20190515180000-OSISAF-L3C_GHRSST-SSTsubskin-GOES16-ssteqc_goes16_20190515_180000-v02.0-fv01.0
+/////////////////////////////////////////////////////
+JSONDecodeError : cmr.py::process_request() - https://cmr.earthdata.nasa.gov/search/granules.umm_json_v1_4?collection_concept_id=C2036877806-POCLOUD&granule_ur=20190515200000-OSISAF-L3C_GHRSST-SSTsubskin-GOES16-ssteqc_goes16_20190515_200000-v02.0-fv01.0
+/////////////////////////////////////////////////////
+JSONDecodeError : cmr.py::process_request() - https://cmr.earthdata.nasa.gov/search/granules.umm_json_v1_4?collection_concept_id=C2036877806-POCLOUD&granule_ur=20190515220000-OSISAF-L3C_GHRSST-SSTsubskin-GOES16-ssteqc_goes16_20190515_220000-v02.0-fv01.0
+/////////////////////////////////////////////////////
+JSONDecodeError : cmr.py::process_request() - https://cmr.earthdata.nasa.gov/search/granules.umm_json_v1_4?collection_concept_id=C2036877806-POCLOUD&granule_ur=20190515230000-OSISAF-L3C_GHRSST-SSTsubskin-GOES16-ssteqc_goes16_20190515_230000-v02.0-fv01.0
+/////////////////////////////////////////////////////
+JSONDecodeError : cmr.py::process_request() - https://cmr.earthdata.nasa.gov/search/granules.umm_json_v1_4?collection_concept_id=C2036877806-POCLOUD&granule_ur=20190516020000-OSISAF-L3C_GHRSST-SSTsubskin-GOES16-ssteqc_goes16_20190516_020000-v02.0-fv01.0
+/////////////////////////////////////////////////////
+JSONDecodeError : cmr.py::process_request() - https://cmr.earthdata.nasa.gov/search/granules.umm_json_v1_4?collection_concept_id=C2036877806-POCLOUD&granule_ur=20190517130000-OSISAF-L3C_GHRSST-SSTsubskin-GOES16-ssteqc_goes16_20190517_130000-v02.0-fv01.0
+/////////////////////////////////////////////////////
+JSONDecodeError : cmr.py::process_request() - https://cmr.earthdata.nasa.gov/search/granules.umm_json_v1_4?collection_concept_id=C2036877806-POCLOUD&granule_ur=20190517140000-OSISAF-L3C_GHRSST-SSTsubskin-GOES16-ssteqc_goes16_20190517_140000-v02.0-fv01.0
+/////////////////////////////////////////////////////
+JSONDecodeError : cmr.py::process_request() - https://cmr.earthdata.nasa.gov/search/granules.umm_json_v1_4?collection_concept_id=C2036877806-POCLOUD&granule_ur=20190517190000-OSISAF-L3C_GHRSST-SSTsubskin-GOES16-ssteqc_goes16_20190517_190000-v02.0-fv01.0
+/////////////////////////////////////////////////////
+JSONDecodeError : cmr.py::process_request() - https://cmr.earthdata.nasa.gov/search/granules.umm_json_v1_4?collection_concept_id=C2036877806-POCLOUD&granule_ur=20190517210000-OSISAF-L3C_GHRSST-SSTsubskin-GOES16-ssteqc_goes16_20190517_210000-v02.0-fv01.0
+/////////////////////////////////////////////////////
+JSONDecodeError : cmr.py::process_request() - https://cmr.earthdata.nasa.gov/search/granules.umm_json_v1_4?collection_concept_id=C2036877806-POCLOUD&granule_ur=20190518030000-OSISAF-L3C_GHRSST-SSTsubskin-GOES16-ssteqc_goes16_20190518_030000-v02.0-fv01.0
+/////////////////////////////////////////////////////
+JSONDecodeError : cmr.py::process_request() - https://cmr.earthdata.nasa.gov/search/granules.umm_json_v1_4?collection_concept_id=C2036877806-POCLOUD&granule_ur=20190518070000-OSISAF-L3C_GHRSST-SSTsubskin-GOES16-ssteqc_goes16_20190518_070000-v02.0-fv01.0
