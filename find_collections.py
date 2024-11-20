@@ -5,9 +5,19 @@ Command line tool for finding all the collections for a provider, or a set
 group of providers, that have OPeNDAP URLs, either in the cloud or under
 on-premises systems.
 
-This looks for the first granule in the collection and evaluates it for
-'OPeNDAPishness.' It does not look at any other granules.
+This looks for the first granule in each collection and determines if that
+URL is OPeNDAP-enabled. It does not look at any other granules in the collection.
+
+The results are written to CSV files named for each provider.
+
+Example usages:
+    ./find_collections.py -t -B -c POCLOUD      # use the brute-force method (-B), cloud only (-c) for POCLOUD
+    ./find_collections.py -t -c POCLOUD         # Use the UMM-s record (no -B) to find OPeNDAP collections
+    ./find_collections.py -t -B -c $(cat providers.txt)  # Use the brute-force method for a list of providers
+
+    ./find_collections.py -t -B -c -s POCLOUD   # Use the brute-force method for cloud (-c) and on-site URLs (-s)
 """
+
 import csv
 import sys
 import time
@@ -38,8 +48,7 @@ def main():
                         action="store_true")
     parser.add_argument("-S", "--stats", help="write the information printed to stdout also to a"
                                         " file named <stats>.csv that can be easily used by a spreadsheet, pandas,"
-                                        "et cetera.",
-                        type=str, default=None)
+                                        " et cetera.", type=str, default=None)
 
     parser.add_argument("providers", nargs="*")
 
@@ -70,7 +79,7 @@ def main():
             if args.opendap_brutishly:
                 entries = cmr.get_provider_opendap_collections_brutishly(provider)
             else:
-                entries = cmr.get_provider_collections(provider, True, pretty=pretty)
+                entries = cmr.get_provider_opendap_collections_uum_s(provider)
 
             duration = time.time() - start
 

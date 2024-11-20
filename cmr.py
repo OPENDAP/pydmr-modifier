@@ -209,7 +209,7 @@ def granule_data_url_dict(json_resp: dict) -> dict:
 
 def granule_json(json_resp: dict) -> dict:
     """
-    This is an identify response for a granules.umm_json request.
+    This is an identity response for a granules.umm_json request.
     :return: The granule JSON from CMR JSON UMM response.
     """
     return json_resp
@@ -453,13 +453,20 @@ def get_collection_granules_umm_first_last(ccid: str, json_processor=granule_ur_
 
 def get_provider_collections(provider: str, opendap=False, pretty=False, service='cmr.earthdata.nasa.gov') -> dict:
     """
-    Get all the collections for a given provider.
+    Get all the OPeNDAP-enabled collections for a given provider. This uses the UMM-S record to get the
+    OPeNDAP-enabled collections. See get_provider_opendap_collections_brutishly() for a
+    method that tests the URLs themselves.
+
+    The return value is a dictionary of the collection concept IDs and titles. For example,
+    {'C2036877686-POCLOUD': 'MetOp-A ASCAT Level 2 12.5-km Ocean Surface Wind Vector Climate ...',
+    'C2036877806-POCLOUD': 'GHRSST L3C hourly America Region sub-skin Sea Surface Temperature v1.0...',
+    'C2036878103-POCLOUD': 'GHRSST Level 4 RAMSSA_9km Australian Regional Foundation Sea Surface  ...'}
 
     :param provider: The string ID for a given EDC provider (e.g., ORNL_CLOUD)
     :param opendap: If true, return only the collections with OPeNDAP URLS
     :param pretty: request a 'pretty' version of the response from the service. default False
     :param service: The URL of the service to query (default cmr.earthdata.nasa.gov)
-    :returns: The total number of entries
+    :returns: A dictionary of CCIDs and titles.
     """
     pretty = '&pretty=true' if pretty else ''
     opendap = '&has_opendap_url=true' if opendap else ''
@@ -507,15 +514,49 @@ def get_provider_opendap_collections_brutishly(provider: str, workers=64, servic
     OPeNDAP URL. We don't include the test for the last URL since there
     might be a collection with only one URL.
 
+    The method collection_has_opendap() is used to test each collection
+    using the granules.umm_json_v1_4 response and the function collection_has_opendap()
+    to determine what is and is not OPeNDAP-enabled.
+
     :param provider: The string ID for a given EDC provider (e.g., ORNL_CLOUD)
     :param workers: Use this many threads when asking CMR about granules. I set this at 64 by trial and error.
     :param service: The URL of the service to query (default cmr.earthdata.nasa.gov)
-    :returns: The total number of entries
+    :returns: A dictionary
     """
     cmr_query_url = f'https://{service}/search/collections.json?provider={provider}'
     all_collections = process_request(cmr_query_url, provider_collections_dict, get_session(), page_size=500)
 
     ccids = list(all_collections.keys())
+
+    with ThreadPoolExecutor(max_workers=workers) as executor:
+        # Use 'partial' to curry collection_has_opendap() if using optional parameters. jhrg 6/30/24
+        results = executor.map(collection_has_opendap, ccids)
+
+    ccids_opendap = {key: (value2, value3) for key, value2, value3 in results}
+
+    return ccids_opendap
+
+
+def get_provider_opendap_collections_uum_s(provider: str, workers=64, service='cmr.earthdata.nasa.gov') -> dict:
+    """
+    Using the UUM-S records, get all the collections for a given provider that have OPeNDAP URLs.
+
+    The method collection_has_opendap() is used to test each collection using
+    the granules.umm_json_v1_4 response and the function collection_has_opendap()
+    to determine what is and is not OPeNDAP-enabled.
+
+    :param provider: The string ID for a given EDC provider (e.g., ORNL_CLOUD)
+    :param workers: Use this many threads when asking CMR about granules. I set this at 64 by trial and error.
+    :param service: The URL of the service to query (default cmr.earthdata.nasa.gov)
+    :returns: A dictionary
+    """
+
+    opendap = '&has_opendap_url=true'
+
+    cmr_query_url = f'https://{service}/search/collections.json?provider={provider}{opendap}'
+    umm_s_collections = process_request(cmr_query_url, provider_collections_dict, get_session(), page_size=500)
+
+    ccids = list(umm_s_collections.keys())
 
     with ThreadPoolExecutor(max_workers=workers) as executor:
         # Use 'partial' to curry collection_has_opendap() if using optional parameters. jhrg 6/30/24
