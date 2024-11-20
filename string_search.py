@@ -18,9 +18,9 @@ done = 0
 
 def get_provider_collections(provider):
     """
-    Retrieves all collections for a specified provider
+    Retrieves all collections for a specified provider that have the OPeNDAP UMM-S record
     :param provider:
-    :return: all collections
+    :return: all collections with the OPeNDAP UMM-S record
     """
     try:
         # Get the collections for a given provider - this provides the CCID and title
