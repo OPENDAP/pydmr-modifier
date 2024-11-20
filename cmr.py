@@ -39,7 +39,8 @@ def is_entry_feed(json_resp: dict) -> bool:
     This function is used to protect various response processors
     from responses that contain no entries or are malformed.
     """
-    return len(json_resp) > 0 and "feed" in json_resp.keys() and "entry" in json_resp["feed"].keys()
+    return (len(json_resp) > 0 and "feed" in json_resp.keys() and isinstance(json_resp["feed"], dict)
+            and "entry" in json_resp["feed"].keys())
 
 
 def is_item_feed(json_resp: dict) -> bool:

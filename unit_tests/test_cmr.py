@@ -95,6 +95,47 @@ class TestCMR(unittest.TestCase):
                                   'https://opendap.earthdata.nasa.gov/collections/C2075141559-POCLOUD/granules'
                                   '/ascat_20121029_010001_metopb_00588_eps_o_250_2101_ovw.l2')}
 
+    def test_valid_feed_with_entry(self):
+        """Test with a valid JSON having 'feed' and 'entry' keys"""
+        json_resp = {"feed": {"entry": {"id": 1, "title": "Sample"}}}
+        self.assertTrue(cmr.is_entry_feed(json_resp))
+
+    def test_valid_feed_without_entry(self):
+        """Test with a valid JSON having 'feed' but no 'entry' key"""
+        json_resp = {"feed": {"not_entry": {"id": 1}}}
+        self.assertFalse(cmr.is_entry_feed(json_resp))
+
+    def test_no_feed_key(self):
+        """Test with a JSON that does not contain 'feed' key"""
+        json_resp = {"no_feed": {"entry": {"id": 1}}}
+        self.assertFalse(cmr.is_entry_feed(json_resp))
+
+    def test_empty_json(self):
+        """Test with an empty JSON object"""
+        json_resp = {}
+        self.assertFalse(cmr.is_entry_feed(json_resp))
+
+    def test_none_json(self):
+        """Test with None as input"""
+        json_resp = None
+        with self.assertRaises(TypeError):
+            cmr.is_entry_feed(json_resp)
+
+    def test_feed_key_not_a_dict(self):
+        """Test with 'feed' key not being a dictionary"""
+        json_resp = {"feed": "not_a_dict"}
+        self.assertFalse(cmr.is_entry_feed(json_resp))
+
+    def test_feed_entry_empty(self):
+        """Test with 'feed' containing an empty 'entry' key"""
+        json_resp = {"feed": {"entry": {}}}
+        self.assertTrue(cmr.is_entry_feed(json_resp))
+
+    def test_feed_entry_missing(self):
+        """Test with 'feed' missing the 'entry' key"""
+        json_resp = {"feed": {}}
+        self.assertFalse(cmr.is_entry_feed(json_resp))
+
     def test_collection_granules_dict(self):
         self.assertEqual({'C1234-Provider': 'A title with spaces'}, cmr.collection_granules_dict(self.d1))
         self.assertEqual({'C1234-Provider': 'A title with spaces', 'C5678-Provider': 'Another title'},
