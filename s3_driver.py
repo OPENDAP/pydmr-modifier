@@ -1,8 +1,8 @@
 
 import configparser
-import regex as re
 import os
 
+import regex as re
 import boto3
 import cmr
 
@@ -35,7 +35,7 @@ def load_config():
     print("\treplace: " + replace)
 
 
-def query_cmr(ccid, max =-1):
+def query_cmr(ccid, max = -1):
     print("Starting query_cmr with url: " + ccid) if verbose else ''
 
     granules = cmr.get_collection_granules(ccid)
@@ -46,12 +46,12 @@ def query_cmr(ccid, max =-1):
     cur_num = 0
     url_list = []
     for granule in granules:
-        print("\ngranule: " + granule + " - " + granules[granule]) if verbose else ''
+        # print("\ngranule: " + granule + " - " + granules[granule]) if verbose else ''
         urls = cmr.get_related_urls(ccid, granules[granule])
-        print("# urls: " + str(len(urls))) if verbose else ''
+        # print("# urls: " + str(len(urls))) if verbose else ''
         for url in urls:
-            print("\turl: " + url + " - " + urls[url]) if verbose else ''
-            if url == "URL2":
+            # print("\turl: " + url + " - " + urls[url]) if verbose else ''
+            if url == "URL2" and urls[url].startswith("s3://"):
                 url_list.append(urls[url])
 
         cur_num += 1
@@ -63,6 +63,8 @@ def query_cmr(ccid, max =-1):
 
 
 def query_s3(s3_url):
+    """Query a s3 bucket for all the dmrpp files it contains."""
+
     print("Starting query_s3 with url: " + s3_url) if verbose else ''
 
     # pseudocode
@@ -81,7 +83,7 @@ def query_s3(s3_url):
     # print out the list of responses
     for obj in response['Contents']:
         print("\t", obj['Key'], obj['Size'])
-        # check if the responce ends with a dmrpp ext.
+        # check if the response ends with a dmrpp ext.
         if obj['Key'].endswith(".dmrpp"):
             files.append(obj['Key'])
         # if so add to a list
@@ -169,7 +171,7 @@ def main():
     parser.add_argument("-v", "--verbose", help="increase output verbosity", action="store_true",
                         default=False)
     parser.add_argument("-c", "--ccid", help="ccid to send to CMR")
-    parser.add_argument("-t", "--test", help="test mode, caps max number of granule urls to 100",
+    parser.add_argument("-t", "--test", help="test mode, caps max number of granule urls to 10",
                         action="store_true", default=False)
 
     args = parser.parse_args()
@@ -186,8 +188,13 @@ def main():
 
     for url in url_list:
         print("\turl: " + url) if verbose else ''
+
+        bucket, _, rest = url.partition('s3://')
+        _, _, key = rest.partition('/')
+
         request_url = url + ".dmrpp"
-        local_path = "Imports/"+request_url
+        local_path = "Imports/" + bucket + "/" + key + ".dmrpp"
+
         download_file_from_s3(nasa_s3, request_url, local_path)
         replace_template(local_path, url)
         copy_file_to_s3(local_path, open_s3, args.ccid+"/"+request_url)
