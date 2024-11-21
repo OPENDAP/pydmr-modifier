@@ -168,6 +168,19 @@ def print_progress(amount, total):
     print(msg, end="\r", flush=True)
 
 
+def build_urls(url):
+    # url_parts =  ('', 's3://', ('podaac_bucket', '/', 'a/very/long/object/name/for/a/file.ext'))
+    url_parts = url.partition("s3://")[2].partition('/')
+
+    bucket = url_parts[0]
+    file = url_parts[2]
+
+    request_url = url + ".dmrpp"
+    local_path = "Imports/" + bucket + "/" + file + ".dmrpp"
+
+    return bucket, file, request_url, local_path
+
+
 def main():
     import argparse
     parser = argparse.ArgumentParser(description="Query CMR and get information about Providers with Collections "
@@ -193,15 +206,7 @@ def main():
 
     for url in url_list:
         print("\turl: " + url) if verbose else ''
-
-        #url_parts =  ('podaac_bucket', '/', 'a/very/long/object/name/for/a/file.ext')
-        url_parts = url.partition("s3://")[2].partition('/')
-
-        bucket = url_parts[0]
-        file = url_parts[2]
-
-        request_url = url + ".dmrpp"
-        local_path = "Imports/" + bucket + "/" + file + ".dmrpp"
+        bucket, file, request_url, local_path = build_urls(url)
 
         download_file_from_s3(bucket, file, local_path)
         replace_template(local_path, url)
