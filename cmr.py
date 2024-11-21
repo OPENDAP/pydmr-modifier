@@ -39,7 +39,9 @@ def is_entry_feed(json_resp: dict) -> bool:
     This function is used to protect various response processors
     from responses that contain no entries or are malformed.
     """
-    return (len(json_resp) > 0 and "feed" in json_resp.keys() and isinstance(json_resp["feed"], dict)
+    return (len(json_resp) > 0
+            and "feed" in json_resp.keys()
+            and isinstance(json_resp["feed"], dict)
             and "entry" in json_resp["feed"].keys())
 
 
@@ -49,7 +51,11 @@ def is_item_feed(json_resp: dict) -> bool:
     This function is used to protect various response processors
     from responses that contain no items or are malformed.
     """
-    return len(json_resp) > 0 and "items" in json_resp.keys() and "meta" in json_resp["items"][0]
+    return (len(json_resp) > 0
+            and "items" in json_resp.keys()
+            and isinstance(json_resp["items"], list)
+            and len(json_resp["items"]) > 0
+            and "meta" in json_resp["items"][0])
 
 
 def is_meta_item(json_resp: dict) -> bool:
@@ -60,9 +66,10 @@ def is_meta_item(json_resp: dict) -> bool:
 
     This function processes the return information from a granules.umm_json request.
     """
-    return len(json_resp) > 0 and "meta" in json_resp.keys() \
-           and "concept-id" in json_resp["meta"].keys() \
-           and "native-id" in json_resp["meta"].keys()
+    return (len(json_resp) > 0 and "meta" in json_resp.keys()
+            and isinstance(json_resp["meta"], dict)
+            and "concept-id" in json_resp["meta"].keys()
+            and "native-id" in json_resp["meta"].keys())
 
 
 def is_granule_item(json_resp: dict) -> bool:
@@ -73,7 +80,10 @@ def is_granule_item(json_resp: dict) -> bool:
 
     This function processes the return information from a granules.umm_json request.
     """
-    return len(json_resp) > 0 and "umm" in json_resp.keys() and "RelatedUrls" in json_resp["umm"].keys()
+    return (len(json_resp) > 0
+            and "umm" in json_resp.keys()
+            and isinstance(json_resp["umm"], dict)
+            and "RelatedUrls" in json_resp["umm"].keys())
 
 
 def collection_granules_dict(json_resp: dict) -> dict:
