@@ -189,13 +189,16 @@ def main():
     for url in url_list:
         print("\turl: " + url) if verbose else ''
 
-        bucket, _, rest = url.partition('s3://')
-        _, _, key = rest.partition('/')
+        #url_parts =  ('podaac_bucket', '/', 'a/very/long/object/name/for/a/file.ext')
+        url_parts = url.partition("s3://")[2].partition('/')
+
+        bucket = url_parts[0]
+        file = url_parts[2]
 
         request_url = url + ".dmrpp"
-        local_path = "Imports/" + bucket + "/" + key + ".dmrpp"
+        local_path = "Imports/" + bucket + "/" + file + ".dmrpp"
 
-        download_file_from_s3(nasa_s3, request_url, local_path)
+        download_file_from_s3(bucket, file, local_path)
         replace_template(local_path, url)
         copy_file_to_s3(local_path, open_s3, args.ccid+"/"+request_url)
         delete_file(local_path)
