@@ -92,7 +92,8 @@ def collection_granules_dict(json_resp: dict) -> dict:
     Do not use it for a granules.umm_json request.
 
     :param json_resp: CMR JSON response
-    :return: A dictionary with the Granule id indexing the producer granule id and granule title
+    :return: A dictionary with the Granule id indexing the granule title and the producer granule id ,
+    or a dictionary with the Granule id indexing the granule title.
     :rtype: dict
     """
     if not is_entry_feed(json_resp):
@@ -104,7 +105,7 @@ def collection_granules_dict(json_resp: dict) -> dict:
         if "producer_granule_id" in entry:  # some granule records lack "producer_granule_id". jhrg 9/4/22
             dict_resp[entry["id"]] = (entry["title"], entry["producer_granule_id"])
         else:
-            dict_resp[entry["id"]] = (entry["title"])
+            dict_resp[entry["id"]] = (entry["title"],)
 
     return dict_resp
 

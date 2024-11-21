@@ -95,12 +95,13 @@ class TestCMR(unittest.TestCase):
                                   'https://opendap.earthdata.nasa.gov/collections/C2075141559-POCLOUD/granules'
                                   '/ascat_20121029_010001_metopb_00588_eps_o_250_2101_ovw.l2')}
 
+    # cmr.collection_granules_dict() is also tested in test_json_processor_cmr_functions.py
     def test_collection_granules_dict(self):
-        self.assertEqual({'C1234-Provider': 'A title with spaces'}, cmr.collection_granules_dict(self.d1))
-        self.assertEqual({'C1234-Provider': 'A title with spaces', 'C5678-Provider': 'Another title'},
+        self.assertEqual({'C1234-Provider': ('A title with spaces',)}, cmr.collection_granules_dict(self.d1))
+        self.assertEqual({'C1234-Provider': ('A title with spaces',), 'C5678-Provider': ('Another title',)},
                          cmr.collection_granules_dict(self.d12))
         self.assertEqual({'C1234-Provider': ('A title with spaces', 'G1234')}, cmr.collection_granules_dict(self.d2))
-        self.assertEqual({'C1234-Provider': ('A title with spaces', 'G1234'), 'C5678-Provider': 'Another title'},
+        self.assertEqual({'C1234-Provider': ('A title with spaces', 'G1234'), 'C5678-Provider': ('Another title',)},
                          cmr.collection_granules_dict(self.d22))
         self.assertEqual({}, cmr.collection_granules_dict(self.d3))
         self.assertEqual({}, cmr.collection_granules_dict(self.d4))
