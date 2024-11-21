@@ -1,6 +1,5 @@
 import unittest
 import cmr
-from unit_tests import CMR_Responses
 
 
 class TestSimpleCMR(unittest.TestCase):
