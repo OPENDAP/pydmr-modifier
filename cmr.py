@@ -417,6 +417,71 @@ def process_request(cmr_query_url: str, response_processor: callable(dict), sess
         return {}
 
 
+def process_request_list(cmr_query_url: str, response_processor: callable(list), session: object,
+                         num_responses = -1, page_size=10, page_num=0) -> list:
+    """
+    Query CMR and return a list of results.
+
+    The generic part of a CMR request. Make the request, print some stuff
+    and return a list of results. The page_size parameter is there so that paged responses
+    can be handled. By default, CMR returns 10 entry items per page.
+
+    :param cmr_query_url: The whole URL, query params and all.
+    :param response_processor: A function that will process the returned json response returning
+    results in a list.
+    :param session: A requests package session object.
+    :param num_responses: The number of responses to get. If not given, gets all the responses.
+    :param page_size: The number of entries per page from CMR. The default is the CMR default value.
+    :param page_num: Return an explicit page of the query response. If not given, gets all the pages.
+
+    :returns: A dictionary of entries
+    :rtype: list
+    """
+    page = 1 if page_num == 0 else page_num
+    entries = []
+    try:
+        while True:
+            # By default, requests uses cookies, supports OAuth2 and reads username and password
+            # from a ~/.netrc file.
+            r = session.get(f'{cmr_query_url}&page_num={page}&page_size={page_size}')
+            page += 1  # if page_num was explicitly set, this is not needed
+
+            print("-", end="", flush=True) if verbose else ''
+            if verbose > 0:
+                print(f'CMR Query URL: {cmr_query_url}')
+                print(f'Status code: {r.status_code}')
+
+            if r.status_code != 200:
+                # JSON returned on error: {'errors': ['Collection-concept-id [ECCO Ocean ...']}
+                raise CMRException(r.status_code, r.json()["errors"][0])
+
+            json_resp = r.json()
+            if "feed" in json_resp and "entry" in json_resp["feed"]:  # 'feed' is for the json response
+                entries_num = len(json_resp["feed"]["entry"])
+            elif "items" in json_resp:  # 'items' is for json_umm
+                entries_num = len(json_resp["items"])
+            else:
+                raise CMRException(200, "cmr.process_request does not know how to decode the response")
+
+            if entries_num > 0:
+                entries_page = response_processor(json_resp)  # The response_processor() is passed in
+                entries = entries + entries_page
+
+            if page_num != 0 or entries_num < page_size or (num_responses > -1 and len(entries) >= num_responses):
+                break
+
+    except requests.exceptions.ConnectionError:
+        err = "/////////////////////////////////////////////////////\n"
+        err += "ConnectionError : cmr.py::process_request() - " + cmr_query_url + "\n"
+        errLog.output_errlog(err)
+    except requests.exceptions.JSONDecodeError:
+        err = "/////////////////////////////////////////////////////\n"
+        err += "JSONDecodeError : cmr.py::process_request() - " + cmr_query_url + "\n"
+        errLog.output_errlog(err)
+
+    return entries
+
+
 """ Used to ensure that each thread has its own session for the HTTP Requests package """
 thread_local = threading.local()
 
@@ -637,6 +702,43 @@ def get_collection_granules(ccid: str, pretty=False, service='cmr.earthdata.nasa
     sort_key = '&sort_key=-start_date' if descending else ''
     cmr_query_url = f'https://{service}/search/granules.json?collection_concept_id={ccid}{pretty}{sort_key}'
     return process_request(cmr_query_url, collection_granules_dict, get_session(), page_size=500)
+
+
+def collection_granules_list(json_resp: dict) -> list:
+    """
+    This function processes the return information from a granules.json request.
+    Do not use it for a granules.umm_json request.
+
+    :param json_resp: CMR JSON response
+    :return: A list with the Granule IDs extracted from a CMR response.
+    :rtype: list
+    """
+    if not is_entry_feed(json_resp):
+        return []
+
+    resp = []
+    # Look for the entry id, title, producer_granule_id and OPeNDAP link. Build a
+    for entry in json_resp["feed"]["entry"]:
+        if "producer_granule_id" in entry:  # some granule records lack "producer_granule_id". jhrg 9/4/22
+            resp += [entry["id"]]
+
+    return resp
+
+
+def get_collection_granule_ids(ccid: str, num = -1, descending=False,  service='cmr.earthdata.nasa.gov') -> list:
+    """
+    Get granule IDs for a collection
+
+    :param ccid: The string Collection Concept ID
+    :param num: Limit the number of granule IDs returned. Default is -1, which returns all granule IDs.
+    :param descending: If true, get the granules in newest first order, else oldest granule is first
+    :param service: The URL of the service to query (default cmr.earthdata.nasa.gov)
+
+    :returns: The collection's Granule IDs, in a list
+    """
+    sort_key = '&sort_key=-start_date' if descending else ''
+    cmr_query_url = f'https://{service}/search/granules.json?collection_concept_id={ccid}{sort_key}'
+    return process_request_list(cmr_query_url, collection_granules_list, get_session(), num, page_size=500)
 
 
 def get_collection_granules_temporal(ccid: str, time_range: str, pretty=False, service='cmr.earthdata.nasa.gov',
