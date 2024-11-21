@@ -35,6 +35,11 @@ def load_config():
     print("\treplace: " + replace)
 
 
+# TODO rewrite this so that we query CMR and get just the Granule IDs and then
+#  use those granule IDs to get the URLs. This will be faster.
+#  It will also make it to limit the number of responses from CMR. Likely we
+#  will write new code to work with CMR to do this since the cmr.py module was
+#  designed to solve a different type of problem. jhrg 11/21/24
 def query_cmr(ccid, max = -1):
     print("Starting query_cmr with url: " + ccid) if verbose else ''
 
@@ -45,9 +50,9 @@ def query_cmr(ccid, max = -1):
     # x = 0
     cur_num = 0
     url_list = []
-    for granule in granules:
-        # print("\ngranule: " + granule + " - " + granules[granule]) if verbose else ''
-        urls = cmr.get_related_urls(ccid, granules[granule])
+    for granule_id in granules:
+        # print("\ngranule: " + granule + " - " + granules[granule_id][0]) if verbose else ''
+        urls = cmr.get_related_urls(ccid, granules[granule_id][0])
         # print("# urls: " + str(len(urls))) if verbose else ''
         for url in urls:
             # print("\turl: " + url + " - " + urls[url]) if verbose else ''
