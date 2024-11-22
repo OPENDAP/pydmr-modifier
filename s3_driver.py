@@ -35,12 +35,15 @@ def load_config():
     print("\treplace: " + replace)
 
 
-# TODO rewrite this so that we query CMR and get just the Granule IDs and then
-#  use those granule IDs to get the URLs. This will be faster.
-#  It will also make it to limit the number of responses from CMR. Likely we
-#  will write new code to work with CMR to do this since the cmr.py module was
-#  designed to solve a different type of problem. jhrg 11/21/24
-def query_cmr(ccid, max = -1):
+def query_cmr(ccid: str, max = -1) -> list:
+    """
+    Queries CMR for a list of granule urls.
+    For the CCID, get a list of granule IDs and use those to find the S3 URLs that
+    provide direct access to the granules. The function will return a list of URLs.
+    :param ccid: CMR Collection Concept ID
+    :param max: Instead of returning all the urls, return only the first 'max' number of urls.
+    :return: A list of URLs
+    """
     print("Starting query_cmr with url: " + ccid) if verbose else ''
 
     # granules is a list of granule IDs, the request to CMR is limited to max return values.
