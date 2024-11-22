@@ -212,7 +212,9 @@ def granule_data_url_dict(json_resp: dict) -> dict:
         for r_url in item["umm"]["RelatedUrls"]:
             if "Type" not in r_url or "URL" not in r_url:
                 continue
-            if "Type" in r_url and r_url["Type"] in ('GET DATA', 'USE SERVICE API') and "Subtype" not in r_url:
+            if ("Type" in r_url
+                    and r_url["Type"] in ('GET DATA', 'USE SERVICE API', 'EXTENDED METADATA')
+                    and "Subtype" not in r_url):
                 dict_resp[f'URL{i}'] = (r_url["URL"])
                 i += 1
 
@@ -437,7 +439,14 @@ def process_request_list(cmr_query_url: str, response_processor: callable(list),
     :returns: A dictionary of entries
     :rtype: list
     """
+    # Ensure that if the caller wants a specific page, that page is returned.
+    # OOtherwise, get all the pages.
     page = 1 if page_num == 0 else page_num
+    # Ensure that if the caller wants fewer responses than the page size, only
+    # that number of responses is retrieved
+    if num_responses > -1 and page_size > num_responses:
+        page_size = num_responses
+
     entries = []
     try:
         while True:
@@ -676,8 +685,8 @@ def get_related_urls(ccid: str, granule_ur: str, pretty=False, service='cmr.eart
 
 def get_cmr_json(ccid: str, granule_ur: str, pretty=False, service='cmr.earthdata.nasa.gov') -> dict:
     """
-    Ask for the CMR JSON object for the given 'restified' path.
-    :param ccid: The string Collection (Concept) Id
+    Ask for the CMR JSON object for the given 'REST' path.
+    :param ccid: The string Collection (Concept) ID
     :param granule_ur: The granule name
     :param pretty: request a 'pretty' version of the response from the service. default False
     :param service: The URL of the service to query. default cmr.earthdata.nasa.gov
@@ -717,9 +726,9 @@ def collection_granules_list(json_resp: dict) -> list:
         return []
 
     resp = []
-    # Look for the entry id, title, producer_granule_id and OPeNDAP link. Build a
+    # Look for the entry id aka the granule ID
     for entry in json_resp["feed"]["entry"]:
-        if "producer_granule_id" in entry:  # some granule records lack "producer_granule_id". jhrg 9/4/22
+        if "id" in entry:  # some granule records lack "producer_granule_id". jhrg 9/4/22
             resp += [entry["id"]]
 
     return resp
@@ -740,6 +749,18 @@ def get_collection_granule_ids(ccid: str, num = -1, descending=False,  service='
     cmr_query_url = f'https://{service}/search/granules.json?collection_concept_id={ccid}{sort_key}'
     return process_request_list(cmr_query_url, collection_granules_list, get_session(), num, page_size=500)
 
+
+def get_related_urls_from_granule_id(ccid: str, granule_id: str, service='cmr.earthdata.nasa.gov') -> dict:
+    """
+    Search for a granules RelatedUrls using the collection concept id and granule ur.
+    This provides a way to go from the REST form of a URL that the OPeNDAP server typically
+    receives and the URLs that can be used to directly access data (and thus the DMR++
+    if the data are in S3 and OPeNDAP-enabled).
+
+    :returns: A dictionary that holds all the RelatedUrls that have Type 'GET DATA' or 'USE SERVICE DATA.'
+    """
+    cmr_query_url = f'https://{service}/search/granules.umm_json?collection_concept_id={ccid}&concept_id={granule_id}'
+    return process_request(cmr_query_url, granule_data_url_dict, get_session(), page_num=1)
 
 def get_collection_granules_temporal(ccid: str, time_range: str, pretty=False, service='cmr.earthdata.nasa.gov',
                                      descending=False) -> dict:

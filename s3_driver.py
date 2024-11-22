@@ -43,21 +43,23 @@ def load_config():
 def query_cmr(ccid, max = -1):
     print("Starting query_cmr with url: " + ccid) if verbose else ''
 
-    granules = cmr.get_collection_granules(ccid)
+    # granules is a list of granule IDs, the request to CMR is limited to max return values.
+    # although if the page size is larger, the function will get that many values from CMR.
+    granules = cmr.get_collection_granule_ids(ccid, max)
     num_gran = len(granules)
     print("# granules: " + str(num_gran))
     print("max: " + str(max)) if max != -1 else ''
-    # x = 0
     cur_num = 0
     url_list = []
     for granule_id in granules:
-        # print("\ngranule: " + granule + " - " + granules[granule_id][0]) if verbose else ''
-        urls = cmr.get_related_urls(ccid, granules[granule_id][0])
-        # print("# urls: " + str(len(urls))) if verbose else ''
+        print(f"\ngranule: {granule_id}") if verbose else ''
+        urls = cmr.get_related_urls_from_granule_id(ccid, granule_id)
+        print(f"# urls: {len(urls)}") if verbose else ''
         for url in urls:
-            # print("\turl: " + url + " - " + urls[url]) if verbose else ''
-            if url == "URL2" and urls[url].startswith("s3://"):
+            print(f"\turl: {urls[url]}") if verbose else ''
+            if urls[url].startswith("s3://"):
                 url_list.append(urls[url])
+                break   # only add the first s3 url
 
         cur_num += 1
         print_progress(cur_num, num_gran)
@@ -189,10 +191,10 @@ def main():
         url_list = query_cmr(args.ccid, 10)
     else:
         url_list = query_cmr(args.ccid)
-    print("# urls: " + str(len(url_list))) if verbose else ''
+    print(f"# urls: {len(url_list)}") if verbose else ''
 
     for url in url_list:
-        print("\turl: " + url) if verbose else ''
+        print(f"\turl: {url}") if verbose else ''
 
         #url_parts =  ('podaac_bucket', '/', 'a/very/long/object/name/for/a/file.ext')
         url_parts = url.partition("s3://")[2].partition('/')
