@@ -55,11 +55,11 @@ def query_cmr(ccid: str, max = -1) -> list:
     cur_num = 0
     url_list = []
     for granule_id in granules:
-        print(f"\ngranule: {granule_id}") if verbose else ''
+        # print(f"\ngranule: {granule_id}") if verbose else ''
         urls = cmr.get_related_urls_from_granule_id(ccid, granule_id)
-        print(f"# urls: {len(urls)}") if verbose else ''
+        # print(f"# urls: {len(urls)}") if verbose else ''
         for url in urls:
-            print(f"\turl: {urls[url]}") if verbose else ''
+            # print(f"\turl: {urls[url]}") if verbose else ''
             if urls[url].startswith("s3://"):
                 url_list.append(urls[url])
                 break   # only add the first s3 url
