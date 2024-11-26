@@ -161,13 +161,13 @@ def delete_file(path):
         print("The file does not exist: " + path)
 
 
-def test_url(url):
+def test_url(url, ccid):
     print(f"\turl: {url}") if verbose else ''
     bucket, file, request_url, local_path = build_urls(url)
 
     download_file_from_s3(bucket, file, local_path)
     replace_template(local_path, url)
-    copy_file_to_s3(local_path, open_s3, args.ccid + "/" + request_url)
+    copy_file_to_s3(local_path, open_s3, ccid + "/" + request_url)
     delete_file(local_path)
 
 
@@ -221,7 +221,7 @@ def main():
     print(f"# urls: {len(url_list)}") if verbose else ''
 
     for url in url_list:
-        test_url(url)
+        test_url(url, args.ccid)
 
     """
     # foreach loop
