@@ -3,7 +3,7 @@ import configparser
 import os
 
 import regex as re
-import boto3
+# import boto3
 import cmr
 
 import earthaccess
@@ -14,6 +14,7 @@ nasa_s3 = ""
 open_s3 = ""
 template = ""
 replace = ""
+
 
 def load_config():
     print("Loading config: ") if verbose else ''
