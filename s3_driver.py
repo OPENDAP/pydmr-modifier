@@ -119,18 +119,11 @@ def download_file_from_s3(s3_bucket_name, s3_file_name, local_file_path):
 
     # first we authenticate with NASA EDL
     auth = Auth().login(strategy="netrc")
+    # are we authenticated?
+    print(auth.authenticated)
 
-    # Then we build a Query with spatiotemporal parameters
-    GranuleQuery = DataGranules().concept_id("C1575731655-LPDAAC_ECS")
-
-    # We get the metadata records from CMR
-    granules = GranuleQuery.get()
-
-    # Now it{s time to download (or open) our data granules list with get()
-    files = Store(auth).get(granules, local_path=local_file_path)
-
-    # s3 = boto3.client('s3')
-    # s3.download_file(s3_bucket_name, s3_file_name, local_file_path)
+    s3 = boto3.client('s3')
+    s3.download_file(s3_bucket_name, s3_file_name, local_file_path)
 
 
 def replace_template(path, url):
