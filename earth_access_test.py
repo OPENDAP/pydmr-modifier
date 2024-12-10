@@ -36,29 +36,29 @@ def example():
 
 def example_hacked():
     """Experiment with earthaccess some more. jhrg 12/06/24"""
-    query = DataGranules().concept_id("C2208422957-POCLOUD").bounding_box(-134.7, 54.9, -100.9, 69.2)
+    query = DataGranules().concept_id("C2208422957-POCLOUD")
     print(f"Granule hits: {query.hits()}")
-    cloud_granules = query.get(10)
+    cloud_granules = query.get(11)
 
     # is this a cloud hosted data granule?
     if cloud_granules[0].cloud_hosted:
-        print(f"# Let's pretty print this: {cloud_granules[0]}")
-        print(f"URL: {cloud_granules[0].data_links()}")
+        #print(f"# Let's pretty print this: {cloud_granules[0]}")
+        print(f"Granule URL: {cloud_granules[0].data_links()}")
 
     # login
     auth = Auth()
     auth.login(strategy="netrc", persist=True)
 
     url = cloud_granules[0].data_links()[0]
-    print(f"URL: {url}")
     if "opendap" in url and url.endswith(".html"):
         url = url.replace(".html", "")
 
     # hack to get the DMR++
     url = f"{url}.dmrpp"
+    print(f"Modified URL: {url}")
 
     local_filename = url.split("/")[-1]
-    path = f"./data/{local_filename}"
+    path = f"./Imports/{local_filename}"
 
     try:
         session = auth.get_session()

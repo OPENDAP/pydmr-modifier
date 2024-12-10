@@ -1,19 +1,21 @@
 
 import configparser
 import os
+import shutil
 
 import regex as re
-# import boto3
-import cmr
+import boto3
+import opendap_cmr
 
-import earthaccess
-from earthaccess import Auth, DataGranules, Store
+# import earthaccess
+from earthaccess import Auth, DataGranules #, Store
 
 verbose = True
 nasa_s3 = ""
 open_s3 = ""
 template = ""
 replace = ""
+auth = Auth()
 
 
 def load_config():
@@ -52,7 +54,7 @@ def query_cmr(ccid: str, max = -1) -> list:
 
     # granules is a list of granule IDs, the request to CMR is limited to max return values.
     # although if the page size is larger, the function will get that many values from CMR.
-    granules = cmr.get_collection_granule_ids(ccid, max)
+    granules = opendap_cmr.get_collection_granule_ids(ccid, max)
     num_gran = len(granules)
     print("# granules: " + str(num_gran))
     print("max: " + str(max)) if max != -1 else ''
@@ -60,7 +62,7 @@ def query_cmr(ccid: str, max = -1) -> list:
     url_list = []
     for granule_id in granules:
         # print(f"\ngranule: {granule_id}") if verbose else ''
-        urls = cmr.get_related_urls_from_granule_id(ccid, granule_id)
+        urls = opendap_cmr.get_related_urls_from_granule_id(ccid, granule_id)
         # print(f"# urls: {len(urls)}") if verbose else ''
         for url in urls:
             # print(f"\turl: {urls[url]}") if verbose else ''
@@ -76,8 +78,47 @@ def query_cmr(ccid: str, max = -1) -> list:
     return url_list
 
 
+def query_earthaccess(ccid, max = -1):
+    """
+    Queries EarthAccess for a list of granule urls.
+    Args:
+        ccid:
+        max:
+
+    Returns:
+    """
+    print("Starting query_earthaccess with url: " + ccid) if verbose else ''
+    query = DataGranules().concept_id(ccid)
+    c = query.hits()
+    print(f"Granule hits: {c}")
+
+    url_list = []
+    for x in range (1, c):
+        cloud_granules = query.get(x)
+        # is this a cloud hosted data granule?
+        if cloud_granules[0].cloud_hosted:
+            # print(f"# Let's pretty print this: {cloud_granules[0]}")
+            print(f"Granule URL: {cloud_granules[0].data_links()}") if verbose and x < 1 else ''
+
+        url = cloud_granules[0].data_links()[0]
+        if "opendap" in url and url.endswith(".html"):
+            url = url.replace(".html", "")
+
+        # hack to get the DMR++
+        url = f"{url}.dmrpp"
+        # print(f"Modified URL: {url}\n")
+        print_progress(x+1, c)
+        url_list.append(url)
+        if len(url_list) == max:
+            break
+
+    return url_list
+
 def query_s3(s3_url):
-    """Query a s3 bucket for all the dmrpp files it contains."""
+    """
+        /!\ currently not used /!\
+        Query a s3 bucket for all the dmrpp files it contains.
+    """
 
     print("Starting query_s3 with url: " + s3_url) if verbose else ''
 
@@ -107,28 +148,32 @@ def query_s3(s3_url):
     return files
 
 
-def download_file_from_s3(s3_bucket_name, s3_file_name, local_file_path):
-    """Downloads a file from an S3 bucket.
-
-    Args:
-        s3_bucket_name (str): The name of the S3 bucket.
-        s3_file_name (str): The file name of the file in S3.
-        local_file_path (str): The path to save the downloaded file locally.
+def download_file_from_s3(url, local_file_path):
     """
-    print("\t\tDownloading: " + s3_file_name) if verbose else ''
-    earthaccess.login()
-
-    # first we authenticate with NASA EDL
-    auth = Auth().login(strategy="netrc")
-    # are we authenticated?
-    print(auth.authenticated)
-
-    s3 = boto3.client('s3')
-    s3.download_file(s3_bucket_name, s3_file_name, local_file_path)
+        Downloads a file from an S3 bucket.
+        Args:
+            url (str): The url of the file in s3.
+            local_file_path (str): The path to save the downloaded file locally.
+    """
+    try:
+        session = auth.get_session()
+        with session.get(
+                url,
+                stream=True,
+                allow_redirects=True,
+        ) as r:
+            r.raise_for_status()
+            with open(local_file_path, "wb") as f:
+                # This is to cap memory usage for large files at 1MB per write to disk per thread
+                # https://docs.python-requests.org/en/latest/user/quickstart/#raw-response-content
+                shutil.copyfileobj(r.raw, f, length=1024 * 1024)
+    except Exception:
+        print(f"Error while downloading the file {local_file_path}")
+        raise Exception
 
 
 def replace_template(path, url):
-    print("Starting Transform: " + path) if verbose else ''
+    # print("Starting Transform: " + path) if verbose else ''
     # pseudocode
     # read file into memory from Imports
     # search the file for the template string
@@ -173,13 +218,13 @@ def delete_file(path):
 
 
 def test_url(url, ccid):
-    print(f"\turl: {url}") if verbose else ''
-    bucket, file, request_url, local_path = build_urls(url)
+    # print(f"\turl: {url}") if verbose else ''
+    request_url, local_path, file = build_urls(url, ccid)
 
-    download_file_from_s3(bucket, file, local_path)
+    download_file_from_s3(request_url, local_path)
     replace_template(local_path, url)
-    copy_file_to_s3(local_path, open_s3, ccid + "/" + request_url)
-    delete_file(local_path)
+    copy_file_to_s3(local_path, open_s3, ccid + "/" + file)
+    # delete_file(local_path)
 
 
 def print_progress(amount, total):
@@ -194,17 +239,23 @@ def print_progress(amount, total):
     print(msg, end="\r", flush=True)
 
 
-def build_urls(url):
+def build_urls(url, ccid):
     # url_parts =  ('', 's3://', ('podaac_bucket', '/', 'a/very/long/object/name/for/a/file.ext'))
-    url_parts = url.partition("s3://")[2].partition('/')
+    # url_parts = url.partition("s3://")[2].partition('/')
 
-    bucket = url_parts[0]
-    file = url_parts[2]
+    # bucket = url_parts[0]
+    # file = url_parts[2]
 
-    request_url = url + ".dmrpp"
-    local_path = "Imports/" + bucket + "/" + file + ".dmrpp"
+    dacc = ccid.partition("-")[2]
+    file = url.split("/")[-1]
 
-    return bucket, file, request_url, local_path
+    request_url = url
+    local_path = "Imports/" + dacc
+    if not os.path.exists(local_path):
+        os.makedirs(local_path)
+    local_path = local_path + "/" + file
+
+    return request_url, local_path, file
 
 
 def main():
@@ -220,19 +271,27 @@ def main():
 
     args = parser.parse_args()
 
+    # first we authenticate with NASA EDL
+    auth.login(strategy="netrc")
+    # are we authenticated?
+    print("Authenticated: " + str(auth.authenticated)) if verbose else ''
+
     print("ccid: " + args.ccid)
     # pseudocode
     # call load_config(...) to set ns3 and os3
     load_config()
     if args.test:
-        url_list = query_cmr(args.ccid, 10)
+        url_list = query_earthaccess(args.ccid, 10)
     else:
-        url_list = query_cmr(args.ccid)
+        url_list = query_earthaccess(args.ccid)
 
-    print(f"# urls: {len(url_list)}") if verbose else ''
+    print(f"\n# urls: {len(url_list)}") if verbose else ''
 
+    x = 1
     for url in url_list:
         test_url(url, args.ccid)
+        print_progress(x, len(url_list))
+        x += 1
 
     """
     # foreach loop
