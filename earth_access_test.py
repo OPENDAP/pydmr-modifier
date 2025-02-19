@@ -1,5 +1,9 @@
 import shutil
+import earthaccess
+from datetime import date
 from earthaccess import Auth, DataGranules, Store
+
+import fileOutput as out
 
 """
 Code to test using earthaccess for our own nefarious goals.
@@ -40,6 +44,7 @@ def example_hacked():
     print(f"Granule hits: {query.hits()}")
     cloud_granules = query.get(11)
 
+
     # is this a cloud hosted data granule?
     if cloud_granules[0].cloud_hosted:
         #print(f"# Let's pretty print this: {cloud_granules[0]}")
@@ -76,5 +81,65 @@ def example_hacked():
         print(f"Error while downloading the file {local_filename}")
         raise Exception
 
+# example_hacked()
 
-example_hacked()
+def example_hacked_v2():
+    """
+    messing around with new earthaccess API calls
+    Returns: nada (atm)
+
+    """
+    ccid = "C2036877806-POCLOUD"
+    # ccid = "C2208422957-POCLOUD"
+    total = 0
+    utotal = 0
+    year_total = 0
+    url_total = 0
+    cur_year = date.today().year
+    out.create_summary(ccid)
+    outlist = []
+    for year in range(1970, cur_year + 1):
+        for month in range(1, 13):
+            results = earthaccess.search_data(
+                concept_id=ccid,
+                temporal=(f"{year}-{month}",f"{year}-{month}"),
+                cloud_hosted=True
+            )  # we can use an inner loop for months, and each month will have a variable number of results.
+            print(f"\t{year}-{month} results: {len(results)}", end=" ") if len(results) > 0 else ''
+
+            out_month = (month, len(results))
+            outlist.append(out_month)
+
+            year_total += len(results)
+
+            url_list = []
+            for result in results:
+                for url in result.data_links():
+                    if "opendap" in url and url.endswith(".html"):
+                        url = url.replace(".html", "")
+
+                    # hack to get the DMR++
+                    url = f"{url}.dmrpp"
+                    url_list.append(url)
+
+            print(f"=> {len(url_list)}") if len(url_list) > 0 else ''
+            url_total += len(url_list)
+        print(f"{year} results: {year_total} => {url_total}")
+
+        out_year = (year, year_total)
+        outlist.append(out_year)
+        out.update_summary(outlist)
+
+        total += year_total
+        utotal += url_total
+        year_total = 0
+        url_total = 0
+        outlist.clear()
+        # results = earthaccess.search_data(concept_id="C2208422957-POCLOUD", cloud_hosted=True)
+        # granule_urls = [g.data_links() for g in results]
+    print(f"total results: {total} => {utotal}")
+
+
+if __name__ == "__main__":
+    # example_hacked()
+    example_hacked_v2()
