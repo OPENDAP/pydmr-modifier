@@ -1,11 +1,26 @@
+import datetime
 
 local_path = ""
+status_path = ""
 
 def write(path, content):
     with open(path, 'w') as f:
         f.write(content)
         f.close()
 
+def create_status():
+    global status_path
+    date = datetime.datetime.now()
+    status_path = f"logs/status_{date.strftime('%m%d%Y_%H%M')}.log"
+    with open(status_path, 'w') as f:
+        f.write(f"Status of Pydmr run on {date.strftime('%m/%d/%Y')}\n")
+        f.close()
+
+def update_status(data):
+    global status_path
+    with open(status_path, 'a') as f:
+        f.write(data)
+        f.close()
 
 def create_summary(ccid):
     global local_path

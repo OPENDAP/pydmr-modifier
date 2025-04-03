@@ -1,21 +1,24 @@
 
 import configparser
+import datetime
 import os
 import shutil
 
 import regex as re
 import boto3
 import opendap_cmr
+import fileOutput as out
 
-# import earthaccess
-from earthaccess import Auth, DataGranules #, Store
+import earthaccess
+# from earthaccess import Auth, DataGranules #, Store
 
 verbose = True
 nasa_s3 = ""
 open_s3 = ""
 template = ""
 replace = ""
-auth = Auth()
+auth = earthaccess.Auth()
+limit = 0
 
 
 def load_config():
@@ -26,19 +29,19 @@ def load_config():
 
     global nasa_s3
     nasa_s3 = parser.get("s3", "ns3")
-    print("\tnasa_s3: " + nasa_s3)
+    print("\tnasa_s3: " + nasa_s3) if verbose else ''
 
     global open_s3
     open_s3 = parser.get("s3", "os3")
-    print("\topen_s3: " + open_s3)
+    print("\topen_s3: " + open_s3) if verbose else ''
 
     global template
     template = parser.get("s3", "tp")
-    print("\ttemplate: " + template)
+    print("\ttemplate: " + template) if verbose else ''
 
     global replace
     replace = parser.get("s3", "rp")
-    print("\treplace: " + replace)
+    print("\treplace: " + replace) if verbose else ''
 
 
 def query_cmr(ccid: str, max = -1) -> list:
@@ -78,41 +81,36 @@ def query_cmr(ccid: str, max = -1) -> list:
     return url_list
 
 
-def query_earthaccess(ccid, max = -1):
+def query_earthaccess(ccid, year, month):
     """
-    Queries EarthAccess for a list of granule urls.
     Args:
         ccid:
-        max:
+        year:
+        month:
 
     Returns:
+
     """
-    print("Starting query_earthaccess with url: " + ccid) if verbose else ''
-    query = DataGranules().concept_id(ccid)
-    c = query.hits()
-    print(f"Granule hits: {c}")
-
+    # print("Starting query_earthaccess with CCID: " + ccid) if verbose else ''
     url_list = []
-    for x in range (1, c):
-        cloud_granules = query.get(x)
-        # is this a cloud hosted data granule?
-        if cloud_granules[0].cloud_hosted:
-            # print(f"# Let's pretty print this: {cloud_granules[0]}")
-            print(f"Granule URL: {cloud_granules[0].data_links()}") if verbose and x < 1 else ''
 
-        url = cloud_granules[0].data_links()[0]
-        if "opendap" in url and url.endswith(".html"):
-            url = url.replace(".html", "")
+    results = earthaccess.search_data(
+        concept_id=ccid,
+        temporal=(f"{year}-{month}",f"{year}-{month}"),
+        cloud_hosted=True
+    )
 
-        # hack to get the DMR++
-        url = f"{url}.dmrpp"
-        # print(f"Modified URL: {url}\n")
-        print_progress(x+1, c)
-        url_list.append(url)
-        if len(url_list) == max:
-            break
+    for result in results:
+        for url in result.data_links():
+            if "opendap" in url and url.endswith(".html"):
+                url = url.replace(".html", "")
+
+            # hack to get the DMR++
+            url = f"{url}.dmrpp"
+            url_list.append(url)
 
     return url_list
+
 
 def query_s3(s3_url):
     """
@@ -167,18 +165,15 @@ def download_file_from_s3(url, local_file_path):
                 # This is to cap memory usage for large files at 1MB per write to disk per thread
                 # https://docs.python-requests.org/en/latest/user/quickstart/#raw-response-content
                 shutil.copyfileobj(r.raw, f, length=1024 * 1024)
-    except Exception:
+    except BaseException as e:
         print(f"Error while downloading the file {local_file_path}")
-        raise Exception
+        print(e)
+        return False
+
+    return True
 
 
 def replace_template(path, url):
-    # print("Starting Transform: " + path) if verbose else ''
-    # pseudocode
-    # read file into memory from Imports
-    # search the file for the template string
-    # replace any instant of templates with the replacement string
-    # write file to Exports
     contents = ""
     with open(path, 'r') as f:
         contents = f.read()
@@ -217,14 +212,16 @@ def delete_file(path):
         print("The file does not exist: " + path)
 
 
-def test_url(url, ccid):
+def test_url(url, ccid, year, month):
     # print(f"\turl: {url}") if verbose else ''
-    request_url, local_path, file = build_urls(url, ccid)
+    local_path, file = build_urls(url, ccid)
+    dacc = ccid.partition("-")[2]
 
-    download_file_from_s3(request_url, local_path)
-    replace_template(local_path, url)
-    copy_file_to_s3(local_path, open_s3, ccid + "/" + file)
-    # delete_file(local_path)
+    if download_file_from_s3(url, local_path):
+        replace_template(local_path, url)
+        file_name = f"{dacc}/{ccid}/{year}/{month}/{file}"
+        copy_file_to_s3(local_path, open_s3, file_name)
+        delete_file(local_path)
 
 
 def print_progress(amount, total):
@@ -235,8 +232,8 @@ def print_progress(amount, total):
     :return:
     """
     percent = amount * 100 / total
-    msg = "\t" + str(round(percent, 2)) + "% [ " + str(amount) + " / " + str(total) + " ] "
-    print(msg, end="\r", flush=True)
+    msg = "\t\t\t" + str(round(percent, 2)) + "% [ " + str(amount) + " / " + str(total) + " ] "
+    print(msg, end="\r", flush=True) if verbose else ''
 
 
 def build_urls(url, ccid):
@@ -249,13 +246,55 @@ def build_urls(url, ccid):
     dacc = ccid.partition("-")[2]
     file = url.split("/")[-1]
 
-    request_url = url
     local_path = "Imports/" + dacc
     if not os.path.exists(local_path):
         os.makedirs(local_path)
     local_path = local_path + "/" + file
 
-    return request_url, local_path, file
+    return local_path, file
+
+
+def load_ccid_list(ifile):
+    ccids = []
+    with open(ifile, 'r') as f:
+        for line in f:
+            ccids.append(line.strip())
+        f.close()
+
+    x = 1
+    for ccid in ccids:
+        out.create_summary(ccid)
+        out.update_status(f"\t[{x} of {len(ccids)}] {ccid} - Started: {datetime.datetime.now().strftime('%H:%M - %m/%d/%Y')}")
+        process_ccid(ccid)
+        out.update_status(f" - Completed: {datetime.datetime.now().strftime('%H:%M - %m/%d/%Y')}\n")
+
+
+def process_ccid(ccid):
+    print(f"{ccid}") if verbose else ''
+    cur_year = datetime.date.today().year
+    outlist = []
+    total = 0
+    for year in range(1970, cur_year + 1):
+        print(f"\t{year}: ") if verbose else ''
+        for month in range(1, 13):
+            url_list = query_earthaccess(ccid, year, month)
+            print(f"\t\t{month} - urls: {len(url_list)}") if verbose and len(url_list) > 0 else '.'
+
+            outlist.append((month, len(url_list)))
+            total += len(url_list)
+
+            x = 0
+            for url in url_list:
+                test_url(url, ccid, year, month)
+                print_progress(x, len(url_list))
+                x += 1
+                if limit != -1 and x > limit:
+                    break
+            print(".") if verbose and len(url_list) > 0 else ''
+
+        outlist.append((year, total))
+        out.update_summary(outlist)
+        outlist.clear()
 
 
 def main():
@@ -265,9 +304,12 @@ def main():
 
     parser.add_argument("-v", "--verbose", help="increase output verbosity", action="store_true",
                         default=False)
-    parser.add_argument("-c", "--ccid", help="ccid to send to CMR")
     parser.add_argument("-t", "--test", help="test mode, caps max number of granule urls to 10",
                         action="store_true", default=False)
+
+    group = parser.add_mutually_exclusive_group(required=True)  # only one option in 'group' is allowed at a time
+    group.add_argument("-c", "--ccid", help="ccid to send to CMR")
+    group.add_argument("-i", "--input", help="path to file containing list of CCIDs")
 
     args = parser.parse_args()
 
@@ -276,32 +318,27 @@ def main():
     # are we authenticated?
     print("Authenticated: " + str(auth.authenticated)) if verbose else ''
 
-    print("ccid: " + args.ccid)
+
     # pseudocode
     # call load_config(...) to set ns3 and os3
     load_config()
+    global limit
     if args.test:
-        url_list = query_earthaccess(args.ccid, 10)
+        limit = 10
     else:
-        url_list = query_earthaccess(args.ccid)
+        limit = -1
 
-    print(f"\n# urls: {len(url_list)}") if verbose else ''
+    out.create_status()
 
-    x = 1
-    for url in url_list:
-        test_url(url, args.ccid)
-        print_progress(x, len(url_list))
-        x += 1
-
-    """
-    # foreach loop
-    for file in files:
-        grab url from list              | (done)
-        download file viva boto3        | (done) (unable to test)
-        regex swap the template         | (done) (unable to test)
-        upload to s3 bucket viva boto3  | (done) (tested using opendap_s3 files, untested with nasa files)
-        delete file                     | (done) (untested)
-    """
+    if args.input:
+        print(f"file: {args.input}")
+        load_ccid_list(args.input)
+    else:
+        print(f"ccid: {args.ccid}") if verbose else ''
+        out.create_summary(args.ccid)
+        out.update_status(f"\t{args.ccid} - Started: {datetime.datetime.now().strftime('%H:%M - %m/%d/%Y')}")
+        process_ccid(args.ccid)
+        out.update_status(f" - Completed: {datetime.datetime.now().strftime('%H:%M - %m/%d/%Y')}\n")
 
 
 if __name__ == "__main__":
