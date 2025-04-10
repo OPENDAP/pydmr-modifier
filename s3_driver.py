@@ -100,6 +100,10 @@ def query_earthaccess(ccid, year, month):
         cloud_hosted=True
     )
 
+    with open("Exports/test_data_granules.txt", 'w') as f:
+        f.write(str(results))
+        f.close()
+
     for result in results:
         for url in result.data_links():
             if "opendap" in url and url.endswith(".html"):
@@ -212,16 +216,16 @@ def delete_file(path):
         print("The file does not exist: " + path)
 
 
-def test_url(url, ccid, year, month):
+def test_url(url, ccid):
     # print(f"\turl: {url}") if verbose else ''
     local_path, file = build_urls(url, ccid)
     dacc = ccid.partition("-")[2]
 
     if download_file_from_s3(url, local_path):
         replace_template(local_path, url)
-        file_name = f"{dacc}/{ccid}/{year}/{month}/{file}"
+        file_name = f"{dacc}/{ccid}/{file}"
         copy_file_to_s3(local_path, open_s3, file_name)
-        delete_file(local_path)
+        # delete_file(local_path)
 
 
 def print_progress(amount, total):
@@ -270,31 +274,32 @@ def load_ccid_list(ifile):
 
 
 def process_ccid(ccid):
-    print(f"{ccid}") if verbose else ''
+    print(f"[==============================]\nccid: {ccid}") if verbose else ''
     cur_year = datetime.date.today().year
     outlist = []
     total = 0
-    for year in range(1970, cur_year + 1):
-        print(f"\t{year}: ") if verbose else ''
-        for month in range(1, 13):
-            url_list = query_earthaccess(ccid, year, month)
-            print(f"\t\t{month} - urls: {len(url_list)}") if verbose and len(url_list) > 0 else '.'
 
-            outlist.append((month, len(url_list)))
-            total += len(url_list)
+    year = 2020
+    month = 1
 
-            x = 0
-            for url in url_list:
-                test_url(url, ccid, year, month)
-                print_progress(x, len(url_list))
-                x += 1
-                if limit != -1 and x > limit:
-                    break
-            print(".") if verbose and len(url_list) > 0 else ''
+    url_list = query_earthaccess(ccid, year, month)
+    print(f"\t\t{month} - urls: {len(url_list)}") if verbose and len(url_list) > 0 else '.'
 
-        outlist.append((year, total))
-        out.update_summary(outlist)
-        outlist.clear()
+    outlist.append((month, len(url_list)))
+    total += len(url_list)
+
+    x = 0
+    for url in url_list:
+        test_url(url, ccid)
+        print_progress(x, len(url_list))
+        x += 1
+        if limit != -1 and x > limit:
+            break
+    print(".") if verbose and len(url_list) > 0 else ''
+
+    outlist.append((year, total))
+    out.update_summary(outlist)
+    outlist.clear()
 
 
 def main():
@@ -331,10 +336,9 @@ def main():
     out.create_status()
 
     if args.input:
-        print(f"file: {args.input}")
+        print(f"file: {args.input}") if verbose else ''
         load_ccid_list(args.input)
     else:
-        print(f"ccid: {args.ccid}") if verbose else ''
         out.create_summary(args.ccid)
         out.update_status(f"\t{args.ccid} - Started: {datetime.datetime.now().strftime('%H:%M - %m/%d/%Y')}")
         process_ccid(args.ccid)

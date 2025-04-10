@@ -2,7 +2,24 @@ import os
 import tempfile
 import unittest
 import s3_driver as s3
-from fileOutput import local_path
+
+granuleA = {"Collection": {'Version': '1.0', 'ShortName': 'GOES16-SST-OSISAF-L3C-v1.0'},
+            "Spatial coverage": {'HorizontalSpatialDomain': {'Geometry': {'BoundingRectangles': [{'WestBoundingCoordinate': -135, 'SouthBoundingCoordinate': -60, 'EastBoundingCoordinate': -15, 'NorthBoundingCoordinate': 60}]}}},
+            "Temporal coverage": {'RangeDateTime': {'EndingDateTime': '2020-01-01T00:30:00.000Z', 'BeginningDateTime': '2019-12-31T23:30:00.000Z'}},
+            "Size(MB)": 10.1276216506958,
+            "Data": ['https://archive.podaac.earthdata.nasa.gov/podaac-ops-cumulus-protected/GOES16-SST-OSISAF-L3C-v1.0/2019/365/20200101000000-OSISAF-L3C_GHRSST-SSTsubskin-GOES16-ssteqc_goes16_20200101_000000-v02.0-fv01.0.nc']
+            }
+granuleB = {"Collection": {'Version': '1.0', 'ShortName': 'GOES16-SST-OSISAF-L3C-v1.0'},
+            "Spatial coverage": {'HorizontalSpatialDomain': {'Geometry': {'BoundingRectangles': [{'WestBoundingCoordinate': -135, 'SouthBoundingCoordinate': -60, 'EastBoundingCoordinate': -15, 'NorthBoundingCoordinate': 60}]}}},
+            "Temporal coverage": {'RangeDateTime': {'EndingDateTime': '2020-01-01T01:30:00.000Z', 'BeginningDateTime': '2020-01-01T00:30:00.000Z'}},
+            "Size(MB)": 10.250887870788574,
+            "Data": ['https://archive.podaac.earthdata.nasa.gov/podaac-ops-cumulus-protected/GOES16-SST-OSISAF-L3C-v1.0/2020/001/20200101010000-OSISAF-L3C_GHRSST-SSTsubskin-GOES16-ssteqc_goes16_20200101_010000-v02.0-fv01.0.nc']
+            }
+
+mock_data_granules = [granuleA, granuleB]
+
+def mock_earthaccess_search():
+    return mock_data_granules
 
 
 class MyTestCase(unittest.TestCase):
