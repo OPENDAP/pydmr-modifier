@@ -100,10 +100,6 @@ def query_earthaccess(ccid, year, month):
         cloud_hosted=True
     )
 
-    with open("Exports/test_data_granules.txt", 'w') as f:
-        f.write(str(results))
-        f.close()
-
     for result in results:
         for url in result.data_links():
             if "opendap" in url and url.endswith(".html"):
@@ -225,7 +221,7 @@ def test_url(url, ccid):
         replace_template(local_path, url)
         file_name = f"{dacc}/{ccid}/{file}"
         copy_file_to_s3(local_path, open_s3, file_name)
-        # delete_file(local_path)
+        delete_file(local_path)
 
 
 def print_progress(amount, total):
@@ -278,28 +274,27 @@ def process_ccid(ccid):
     cur_year = datetime.date.today().year
     outlist = []
     total = 0
+    for year in range(1970, cur_year + 1):
+        print(f"\t{year}: ") if verbose else ''
+        for month in range(1, 13):
+            url_list = query_earthaccess(ccid, year, month)
+            print(f"\t\t{month} - urls: {len(url_list)}") if verbose and len(url_list) > 0 else '.'
+            outlist.append((month, len(url_list)))
+            total += len(url_list)
 
-    year = 2020
-    month = 1
+            x = 0
+            for url in url_list:
+                test_url(url, ccid, year, month)
+                print_progress(x, len(url_list))
+                x += 1
+                if limit != -1 and x > limit:
+                    break
 
-    url_list = query_earthaccess(ccid, year, month)
-    print(f"\t\t{month} - urls: {len(url_list)}") if verbose and len(url_list) > 0 else '.'
+            print(".") if verbose and len(url_list) > 0 else ''
 
-    outlist.append((month, len(url_list)))
-    total += len(url_list)
-
-    x = 0
-    for url in url_list:
-        test_url(url, ccid)
-        print_progress(x, len(url_list))
-        x += 1
-        if limit != -1 and x > limit:
-            break
-    print(".") if verbose and len(url_list) > 0 else ''
-
-    outlist.append((year, total))
-    out.update_summary(outlist)
-    outlist.clear()
+        outlist.append((year, total))
+        out.update_summary(outlist)
+        outlist.clear()
 
 
 def main():

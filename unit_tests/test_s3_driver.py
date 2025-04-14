@@ -1,6 +1,7 @@
 import os
 import tempfile
 import unittest
+from unittest.mock import patch  # For mocking external dependencies
 import s3_driver as s3
 
 granuleA = {"Collection": {'Version': '1.0', 'ShortName': 'GOES16-SST-OSISAF-L3C-v1.0'},
@@ -18,7 +19,7 @@ granuleB = {"Collection": {'Version': '1.0', 'ShortName': 'GOES16-SST-OSISAF-L3C
 
 mock_data_granules = [granuleA, granuleB]
 
-def mock_earthaccess_search():
+def mock_earthaccess_search(ccid, temporal, bool):
     return mock_data_granules
 
 
@@ -32,6 +33,14 @@ class MyTestCase(unittest.TestCase):
         self.temp_file = tempfile.NamedTemporaryFile(dir=self.temp_dir, delete=False)
         self.addCleanup(self.temp_file.close)  # Ensure file is closed
         self.addCleanup(os.remove, self.temp_file.name)  # Ensure file is deleted
+
+    @patch('earthaccess.search_data', mock_earthaccess_search)
+    def test_query_earthaccess_list(self):
+        s3.verbose = False
+        url_list =  s3.query_earthaccess("C##########-DACC", 2020, 1)
+        for url in url_list:
+            print(url)
+        self.assertEqual(url_list[0], "...")
 
     def test_load_config(self):
         s3.verbose = False
