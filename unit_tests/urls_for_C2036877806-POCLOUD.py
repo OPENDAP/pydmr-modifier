@@ -1,0 +1,11 @@
+urls = [
+    's3://podaac-ops-cumulus-protected/GOES16-SST-OSISAF-L3C-v1.0/2017/348/20171214180000-OSISAF-L3C_GHRSST-SSTsubskin-GOES16-ssteqc_goes16_20171214_180000-v02.0-fv01.0.nc',
+    's3://podaac-ops-cumulus-protected/GOES16-SST-OSISAF-L3C-v1.0/2017/348/20171214190000-OSISAF-L3C_GHRSST-SSTsubskin-GOES16-ssteqc_goes16_20171214_190000-v02.0-fv01.0.nc',
+    's3://podaac-ops-cumulus-protected/GOES16-SST-OSISAF-L3C-v1.0/2017/348/20171214200000-OSISAF-L3C_GHRSST-SSTsubskin-GOES16-ssteqc_goes16_20171214_200000-v02.0-fv01.0.nc',
+    's3://podaac-ops-cumulus-protected/GOES16-SST-OSISAF-L3C-v1.0/2017/348/20171214210000-OSISAF-L3C_GHRSST-SSTsubskin-GOES16-ssteqc_goes16_20171214_210000-v02.0-fv01.0.nc',
+    's3://podaac-ops-cumulus-protected/GOES16-SST-OSISAF-L3C-v1.0/2017/348/20171214220000-OSISAF-L3C_GHRSST-SSTsubskin-GOES16-ssteqc_goes16_20171214_220000-v02.0-fv01.0.nc',
+    's3://podaac-ops-cumulus-protected/GOES16-SST-OSISAF-L3C-v1.0/2017/348/20171214230000-OSISAF-L3C_GHRSST-SSTsubskin-GOES16-ssteqc_goes16_20171214_230000-v02.0-fv01.0.nc',
+    's3://podaac-ops-cumulus-protected/GOES16-SST-OSISAF-L3C-v1.0/2017/348/20171215000000-OSISAF-L3C_GHRSST-SSTsubskin-GOES16-ssteqc_goes16_20171215_000000-v02.0-fv01.0.nc',
+    's3://podaac-ops-cumulus-protected/GOES16-SST-OSISAF-L3C-v1.0/2017/349/20171215010000-OSISAF-L3C_GHRSST-SSTsubskin-GOES16-ssteqc_goes16_20171215_010000-v02.0-fv01.0.nc',
+    's3://podaac-ops-cumulus-protected/GOES16-SST-OSISAF-L3C-v1.0/2017/349/20171215020000-OSISAF-L3C_GHRSST-SSTsubskin-GOES16-ssteqc_goes16_20171215_020000-v02.0-fv01.0.nc',
+    's3://podaac-ops-cumulus-protected/GOES16-SST-OSISAF-L3C-v1.0/2017/349/20171215030000-OSISAF-L3C_GHRSST-SSTsubskin-GOES16-ssteqc_goes16_20171215_030000-v02.0-fv01.0.nc']

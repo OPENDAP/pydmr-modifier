@@ -39,7 +39,10 @@ def is_entry_feed(json_resp: dict) -> bool:
     This function is used to protect various response processors
     from responses that contain no entries or are malformed.
     """
-    return len(json_resp) > 0 and "feed" in json_resp.keys() and "entry" in json_resp["feed"].keys()
+    return (len(json_resp) > 0
+            and "feed" in json_resp.keys()
+            and isinstance(json_resp["feed"], dict)
+            and "entry" in json_resp["feed"].keys())
 
 
 def is_item_feed(json_resp: dict) -> bool:
@@ -48,7 +51,11 @@ def is_item_feed(json_resp: dict) -> bool:
     This function is used to protect various response processors
     from responses that contain no items or are malformed.
     """
-    return len(json_resp) > 0 and "items" in json_resp.keys() and "meta" in json_resp["items"][0]
+    return (len(json_resp) > 0
+            and "items" in json_resp.keys()
+            and isinstance(json_resp["items"], list)
+            and len(json_resp["items"]) > 0
+            and "meta" in json_resp["items"][0])
 
 
 def is_meta_item(json_resp: dict) -> bool:
@@ -59,9 +66,10 @@ def is_meta_item(json_resp: dict) -> bool:
 
     This function processes the return information from a granules.umm_json request.
     """
-    return len(json_resp) > 0 and "meta" in json_resp.keys() \
-           and "concept-id" in json_resp["meta"].keys() \
-           and "native-id" in json_resp["meta"].keys()
+    return (len(json_resp) > 0 and "meta" in json_resp.keys()
+            and isinstance(json_resp["meta"], dict)
+            and "concept-id" in json_resp["meta"].keys()
+            and "native-id" in json_resp["meta"].keys())
 
 
 def is_granule_item(json_resp: dict) -> bool:
@@ -72,7 +80,10 @@ def is_granule_item(json_resp: dict) -> bool:
 
     This function processes the return information from a granules.umm_json request.
     """
-    return len(json_resp) > 0 and "umm" in json_resp.keys() and "RelatedUrls" in json_resp["umm"].keys()
+    return (len(json_resp) > 0
+            and "umm" in json_resp.keys()
+            and isinstance(json_resp["umm"], dict)
+            and "RelatedUrls" in json_resp["umm"].keys())
 
 
 def collection_granules_dict(json_resp: dict) -> dict:
@@ -81,7 +92,8 @@ def collection_granules_dict(json_resp: dict) -> dict:
     Do not use it for a granules.umm_json request.
 
     :param json_resp: CMR JSON response
-    :return: A dictionary with the Granule id indexing the producer granule id and granule title
+    :return: A dictionary with the Granule id indexing the granule title and the producer granule id ,
+    or a dictionary with the Granule id indexing the granule title.
     :rtype: dict
     """
     if not is_entry_feed(json_resp):
@@ -93,7 +105,7 @@ def collection_granules_dict(json_resp: dict) -> dict:
         if "producer_granule_id" in entry:  # some granule records lack "producer_granule_id". jhrg 9/4/22
             dict_resp[entry["id"]] = (entry["title"], entry["producer_granule_id"])
         else:
-            dict_resp[entry["id"]] = (entry["title"])
+            dict_resp[entry["id"]] = (entry["title"],)
 
     return dict_resp
 
@@ -200,7 +212,9 @@ def granule_data_url_dict(json_resp: dict) -> dict:
         for r_url in item["umm"]["RelatedUrls"]:
             if "Type" not in r_url or "URL" not in r_url:
                 continue
-            if "Type" in r_url and r_url["Type"] in ('GET DATA', 'USE SERVICE API') and "Subtype" not in r_url:
+            if ("Type" in r_url
+                    and r_url["Type"] in ('GET DATA', 'USE SERVICE API', 'EXTENDED METADATA')
+                    and "Subtype" not in r_url):
                 dict_resp[f'URL{i}'] = (r_url["URL"])
                 i += 1
 
@@ -209,7 +223,7 @@ def granule_data_url_dict(json_resp: dict) -> dict:
 
 def granule_json(json_resp: dict) -> dict:
     """
-    This is an identify response for a granules.umm_json request.
+    This is an identity response for a granules.umm_json request.
     :return: The granule JSON from CMR JSON UMM response.
     """
     return json_resp
@@ -405,6 +419,78 @@ def process_request(cmr_query_url: str, response_processor: callable(dict), sess
         return {}
 
 
+def process_request_list(cmr_query_url: str, response_processor: callable(list), session: object,
+                         num_responses = -1, page_size=10, page_num=0) -> list:
+    """
+    Query CMR and return a list of results.
+
+    The generic part of a CMR request. Make the request, print some stuff
+    and return a list of results. The page_size parameter is there so that paged responses
+    can be handled. By default, CMR returns 10 entry items per page.
+
+    :param cmr_query_url: The whole URL, query params and all.
+    :param response_processor: A function that will process the returned json response returning
+    results in a list.
+    :param session: A requests package session object.
+    :param num_responses: The number of responses to get. If not given, gets all the responses.
+    :param page_size: The number of entries per page from CMR. The default is the CMR default value.
+    :param page_num: Return an explicit page of the query response. If not given, gets all the pages.
+
+    :returns: A dictionary of entries
+    :rtype: list
+    """
+    # Ensure that if the caller wants a specific page, that page is returned.
+    # OOtherwise, get all the pages.
+    page = 1 if page_num == 0 else page_num
+    # Ensure that if the caller wants fewer responses than the page size, only
+    # that number of responses is retrieved
+    if num_responses > -1 and page_size > num_responses:
+        page_size = num_responses
+
+    entries = []
+    try:
+        while True:
+            # By default, requests uses cookies, supports OAuth2 and reads username and password
+            # from a ~/.netrc file.
+            r = session.get(f'{cmr_query_url}&page_num={page}&page_size={page_size}')
+            page += 1  # if page_num was explicitly set, this is not needed
+
+            print("-", end="", flush=True) if verbose else ''
+            if verbose > 0:
+                print(f'CMR Query URL: {cmr_query_url}')
+                print(f'Status code: {r.status_code}')
+
+            if r.status_code != 200:
+                # JSON returned on error: {'errors': ['Collection-concept-id [ECCO Ocean ...']}
+                raise CMRException(r.status_code, r.json()["errors"][0])
+
+            json_resp = r.json()
+            if "feed" in json_resp and "entry" in json_resp["feed"]:  # 'feed' is for the json response
+                entries_num = len(json_resp["feed"]["entry"])
+            elif "items" in json_resp:  # 'items' is for json_umm
+                entries_num = len(json_resp["items"])
+            else:
+                raise CMRException(200, "cmr.process_request does not know how to decode the response")
+
+            if entries_num > 0:
+                entries_page = response_processor(json_resp)  # The response_processor() is passed in
+                entries = entries + entries_page
+
+            if page_num != 0 or entries_num < page_size or (num_responses > -1 and len(entries) >= num_responses):
+                break
+
+    except requests.exceptions.ConnectionError:
+        err = "/////////////////////////////////////////////////////\n"
+        err += "ConnectionError : cmr.py::process_request() - " + cmr_query_url + "\n"
+        errLog.output_errlog(err)
+    except requests.exceptions.JSONDecodeError:
+        err = "/////////////////////////////////////////////////////\n"
+        err += "JSONDecodeError : cmr.py::process_request() - " + cmr_query_url + "\n"
+        errLog.output_errlog(err)
+
+    return entries
+
+
 """ Used to ensure that each thread has its own session for the HTTP Requests package """
 thread_local = threading.local()
 
@@ -453,13 +539,20 @@ def get_collection_granules_umm_first_last(ccid: str, json_processor=granule_ur_
 
 def get_provider_collections(provider: str, opendap=False, pretty=False, service='cmr.earthdata.nasa.gov') -> dict:
     """
-    Get all the collections for a given provider.
+    Get all the OPeNDAP-enabled collections for a given provider. This uses the UMM-S record to get the
+    OPeNDAP-enabled collections. See get_provider_opendap_collections_brutishly() for a
+    method that tests the URLs themselves.
+
+    The return value is a dictionary of the collection concept IDs and titles. For example,
+    {'C2036877686-POCLOUD': 'MetOp-A ASCAT Level 2 12.5-km Ocean Surface Wind Vector Climate ...',
+    'C2036877806-POCLOUD': 'GHRSST L3C hourly America Region sub-skin Sea Surface Temperature v1.0...',
+    'C2036878103-POCLOUD': 'GHRSST Level 4 RAMSSA_9km Australian Regional Foundation Sea Surface  ...'}
 
     :param provider: The string ID for a given EDC provider (e.g., ORNL_CLOUD)
     :param opendap: If true, return only the collections with OPeNDAP URLS
     :param pretty: request a 'pretty' version of the response from the service. default False
     :param service: The URL of the service to query (default cmr.earthdata.nasa.gov)
-    :returns: The total number of entries
+    :returns: A dictionary of CCIDs and titles.
     """
     pretty = '&pretty=true' if pretty else ''
     opendap = '&has_opendap_url=true' if opendap else ''
@@ -507,15 +600,49 @@ def get_provider_opendap_collections_brutishly(provider: str, workers=64, servic
     OPeNDAP URL. We don't include the test for the last URL since there
     might be a collection with only one URL.
 
+    The method collection_has_opendap() is used to test each collection
+    using the granules.umm_json_v1_4 response and the function collection_has_opendap()
+    to determine what is and is not OPeNDAP-enabled.
+
     :param provider: The string ID for a given EDC provider (e.g., ORNL_CLOUD)
     :param workers: Use this many threads when asking CMR about granules. I set this at 64 by trial and error.
     :param service: The URL of the service to query (default cmr.earthdata.nasa.gov)
-    :returns: The total number of entries
+    :returns: A dictionary
     """
     cmr_query_url = f'https://{service}/search/collections.json?provider={provider}'
     all_collections = process_request(cmr_query_url, provider_collections_dict, get_session(), page_size=500)
 
     ccids = list(all_collections.keys())
+
+    with ThreadPoolExecutor(max_workers=workers) as executor:
+        # Use 'partial' to curry collection_has_opendap() if using optional parameters. jhrg 6/30/24
+        results = executor.map(collection_has_opendap, ccids)
+
+    ccids_opendap = {key: (value2, value3) for key, value2, value3 in results}
+
+    return ccids_opendap
+
+
+def get_provider_opendap_collections_uum_s(provider: str, workers=64, service='cmr.earthdata.nasa.gov') -> dict:
+    """
+    Using the UUM-S records, get all the collections for a given provider that have OPeNDAP URLs.
+
+    The method collection_has_opendap() is used to test each collection using
+    the granules.umm_json_v1_4 response and the function collection_has_opendap()
+    to determine what is and is not OPeNDAP-enabled.
+
+    :param provider: The string ID for a given EDC provider (e.g., ORNL_CLOUD)
+    :param workers: Use this many threads when asking CMR about granules. I set this at 64 by trial and error.
+    :param service: The URL of the service to query (default cmr.earthdata.nasa.gov)
+    :returns: A dictionary
+    """
+
+    opendap = '&has_opendap_url=true'
+
+    cmr_query_url = f'https://{service}/search/collections.json?provider={provider}{opendap}'
+    umm_s_collections = process_request(cmr_query_url, provider_collections_dict, get_session(), page_size=500)
+
+    ccids = list(umm_s_collections.keys())
 
     with ThreadPoolExecutor(max_workers=workers) as executor:
         # Use 'partial' to curry collection_has_opendap() if using optional parameters. jhrg 6/30/24
@@ -558,8 +685,8 @@ def get_related_urls(ccid: str, granule_ur: str, pretty=False, service='cmr.eart
 
 def get_cmr_json(ccid: str, granule_ur: str, pretty=False, service='cmr.earthdata.nasa.gov') -> dict:
     """
-    Ask for the CMR JSON object for the given 'restified' path.
-    :param ccid: The string Collection (Concept) Id
+    Ask for the CMR JSON object for the given 'REST' path.
+    :param ccid: The string Collection (Concept) ID
     :param granule_ur: The granule name
     :param pretty: request a 'pretty' version of the response from the service. default False
     :param service: The URL of the service to query. default cmr.earthdata.nasa.gov
@@ -585,6 +712,55 @@ def get_collection_granules(ccid: str, pretty=False, service='cmr.earthdata.nasa
     cmr_query_url = f'https://{service}/search/granules.json?collection_concept_id={ccid}{pretty}{sort_key}'
     return process_request(cmr_query_url, collection_granules_dict, get_session(), page_size=500)
 
+
+def collection_granules_list(json_resp: dict) -> list:
+    """
+    This function processes the return information from a granules.json request.
+    Do not use it for a granules.umm_json request.
+
+    :param json_resp: CMR JSON response
+    :return: A list with the Granule IDs extracted from a CMR response.
+    :rtype: list
+    """
+    if not is_entry_feed(json_resp):
+        return []
+
+    resp = []
+    # Look for the entry id aka the granule ID
+    for entry in json_resp["feed"]["entry"]:
+        if "id" in entry:  # some granule records lack "producer_granule_id". jhrg 9/4/22
+            resp += [entry["id"]]
+
+    return resp
+
+
+def get_collection_granule_ids(ccid: str, num = -1, descending=False,  service='cmr.earthdata.nasa.gov') -> list:
+    """
+    Get granule IDs for a collection
+
+    :param ccid: The string Collection Concept ID
+    :param num: Limit the number of granule IDs returned. Default is -1, which returns all granule IDs.
+    :param descending: If true, get the granules in newest first order, else oldest granule is first
+    :param service: The URL of the service to query (default cmr.earthdata.nasa.gov)
+
+    :returns: The collection's Granule IDs, in a list
+    """
+    sort_key = '&sort_key=-start_date' if descending else ''
+    cmr_query_url = f'https://{service}/search/granules.json?collection_concept_id={ccid}{sort_key}'
+    return process_request_list(cmr_query_url, collection_granules_list, get_session(), num, page_size=500)
+
+
+def get_related_urls_from_granule_id(ccid: str, granule_id: str, service='cmr.earthdata.nasa.gov') -> dict:
+    """
+    Search for a granules RelatedUrls using the collection concept id and granule ur.
+    This provides a way to go from the REST form of a URL that the OPeNDAP server typically
+    receives and the URLs that can be used to directly access data (and thus the DMR++
+    if the data are in S3 and OPeNDAP-enabled).
+
+    :returns: A dictionary that holds all the RelatedUrls that have Type 'GET DATA' or 'USE SERVICE DATA.'
+    """
+    cmr_query_url = f'https://{service}/search/granules.umm_json?collection_concept_id={ccid}&concept_id={granule_id}'
+    return process_request(cmr_query_url, granule_data_url_dict, get_session(), page_num=1)
 
 def get_collection_granules_temporal(ccid: str, time_range: str, pretty=False, service='cmr.earthdata.nasa.gov',
                                      descending=False) -> dict:

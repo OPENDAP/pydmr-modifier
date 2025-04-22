@@ -6,3 +6,10 @@ log_dir = /home/slloyd/git/pydmr/logs
 [testing]
 src_dir = /home/slloyd/Documents/Testing
 dst_dir = /home/slloyd/Documents/html
+
+[s3]
+ns3 = nasa-s3-bucket-name
+zos3 = dmrpp-sit-poc
+os3 = s3-module-test-bucket
+tp = test3, test4, test5
+rp = OPeNDAP_DMRpp_DATA_ACCESS_URL

@@ -1,5 +1,17 @@
 
-# PyDMR
+# PyDMR-modifier
+
+## Requirements
+* Python 3.10 or later
+* boto3
+* regex
+
+## Example
+
+```python3 s3_driver.py -c C2036877806-POCLOUD -v -t ```
+
+----
+## Old text follows
 PyDMR is a set of utilities that implement a regression testing framework for OPeNDAP data 
 held in the NASA Earthdata Cloud system. It also can be used to test the idea of a DMR++ 
 invariant and ways that might be used in a DMR++ caching scheme.
